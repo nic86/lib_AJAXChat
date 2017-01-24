@@ -692,7 +692,7 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
                     break;
                 default:
                     this.playSound(this.settings['soundReceive']);
-                    break;
+					break;
             }
             //Notification
         var permission,
@@ -1359,6 +1359,9 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 	
 	blinkOnNewMessage: function(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
 		if(this.settings['blink'] && this.lastID && !this.channelSwitch && userID !== this.userID) {
+			// Modyfied by YetiForce CRM //
+			parent.AJAXChat_Chat_Js.registerUnreadMessage();
+			// Modyfied by YetiForce CRM //
 			clearInterval(this.blinkInterval);
 			this.blinkInterval = setInterval(
 				'ajaxChat.blinkUpdate(\''+this.addSlashes(this.decodeSpecialChars(userName))+'\')',
