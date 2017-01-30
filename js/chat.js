@@ -4,10 +4,10 @@
  * @copyright (c) Sebastian Tschan
  * @license Modified MIT License
  * @link https://blueimp.net/ajax/
- * 
+ *
  * The SELFHTML documentation has been used throughout this project:
  * http://selfhtml.org
- * 
+ *
  * Stylesheet and cookie methods have been inspired by Paul Sowden (A List Apart):
  * http://www.alistapart.com/stories/alternate/
  */
@@ -85,92 +85,98 @@ var ajaxChat = {
 	httpRequest: null,
 	retryTimer: null,
 	retryTimerDelay: null,
-	requestStatus: 'ok',
+	requestStatus: null,
 	DOMbuffering: null,
 	DOMbuffer: null,
-	DOMbufferRowClass: 'rowOdd',
-	
-	init: function(config, lang, initSettings, initStyle, initialize, initializeFunction, finalizeFunction) {	
-		this.httpRequest		= {};
-		this.usersList			= [];
-		this.userNamesList		= [];
-		this.userMenuCounter	= 0;
-		this.lastID				= 0;
-		this.localID			= 0;
-		this.lang				= lang;		
+	DOMbufferRowClass: null,
+	inUrlBBCode: null,
+	debug: null,
+
+	init: function (config, lang, initSettings, initStyle, initialize, initializeFunction, finalizeFunction) {
+		this.httpRequest = {};
+		this.usersList = [];
+		this.userNamesList = [];
+		this.userMenuCounter = 0;
+		this.lastID = 0;
+		this.localID = 0;
+		this.lang = lang;
+		this.requestStatus = 'ok';
+		this.DOMbufferRowClass = 'rowOdd';
+		this.inUrlBBCode = false;
 		this.initConfig(config);
-		this.initDirectories();		
-		if(initSettings) {
+		this.initDirectories();
+		if (initSettings) {
 			this.initSettings();
 		}
-		if(initStyle) {
+		if (initStyle) {
 			this.initStyle();
 		}
 		this.initializeFunction = initializeFunction;
 		this.finalizeFunction = finalizeFunction;
-		if(initialize) {
+		if (initialize) {
 			this.setLoadHandler();
 		}
 	},
-	
-	initConfig: function(config) {
-		this.loginChannelID			= config['loginChannelID'];
-		this.loginChannelName		= config['loginChannelName'];
-		this.timerRate				= config['timerRate'];
-		this.ajaxURL				= config['ajaxURL'];
-		this.baseURL				= config['baseURL'];
-		this.regExpMediaUrl			= config['regExpMediaUrl'];
-		this.startChatOnLoad		= config['startChatOnLoad'];
-		this.domIDs					= config['domIDs'];
-		this.settings				= config['settings'];
-		this.nonPersistentSettings	= config['nonPersistentSettings'];
-		this.bbCodeTags				= config['bbCodeTags'];
-		this.colorCodes				= config['colorCodes'];
-		this.emoticonCodes			= config['emoticonCodes'];
-		this.emoticonFiles			= config['emoticonFiles'];
-		this.soundFiles				= config['soundFiles'];
-		this.sessionName			= config['sessionName'];
-		this.cookieExpiration		= config['cookieExpiration'];
-		this.cookiePath				= config['cookiePath'];
-		this.cookieDomain			= config['cookieDomain'];
-		this.cookieSecure			= config['cookieSecure'];
-		this.chatBotName			= config['chatBotName'];
-		this.chatBotID				= config['chatBotID'];
-		this.allowUserMessageDelete	= config['allowUserMessageDelete'];
-		this.inactiveTimeout		= config['inactiveTimeout'];
-		this.privateChannelDiff		= config['privateChannelDiff'];
-		this.privateMessageDiff		= config['privateMessageDiff'];
-		this.showChannelMessages	= config['showChannelMessages'];
-		this.messageTextMaxLength	= config['messageTextMaxLength'];
-		this.socketServerEnabled	= config['socketServerEnabled'];
-		this.socketServerHost		= config['socketServerHost'];
-		this.socketServerPort		= config['socketServerPort'];
-		this.socketServerChatID		= config['socketServerChatID'];
-		this.DOMbuffering			= false;
-		this.DOMbuffer				= "";
-		this.retryTimerDelay 		= (this.inactiveTimeout*6000 - this.timerRate)/4 + this.timerRate;
+
+	initConfig: function (config) {
+		this.loginChannelID = config['loginChannelID'];
+		this.loginChannelName = config['loginChannelName'];
+		this.timerRate = config['timerRate'];
+		this.ajaxURL = config['ajaxURL'];
+		this.baseURL = config['baseURL'];
+		this.regExpMediaUrl = config['regExpMediaUrl'];
+		this.startChatOnLoad = config['startChatOnLoad'];
+		this.domIDs = config['domIDs'];
+		this.settings = config['settings'];
+		this.nonPersistentSettings = config['nonPersistentSettings'];
+		this.bbCodeTags = config['bbCodeTags'];
+		this.colorCodes = config['colorCodes'];
+		this.emoticonCodes = config['emoticonCodes'];
+		this.emoticonFiles = config['emoticonFiles'];
+		this.soundFiles = config['soundFiles'];
+		this.sessionName = config['sessionName'];
+		this.cookieExpiration = config['cookieExpiration'];
+		this.cookiePath = config['cookiePath'];
+		this.cookieDomain = config['cookieDomain'];
+		this.cookieSecure = config['cookieSecure'];
+		this.chatBotName = config['chatBotName'];
+		this.chatBotID = config['chatBotID'];
+		this.allowUserMessageDelete = config['allowUserMessageDelete'];
+		this.inactiveTimeout = Math.max(config['inactiveTimeout'], 2);
+		this.privateChannelDiff = config['privateChannelDiff'];
+		this.privateMessageDiff = config['privateMessageDiff'];
+		this.showChannelMessages = config['showChannelMessages'];
+		this.messageTextMaxLength = config['messageTextMaxLength'];
+		this.socketServerEnabled = config['socketServerEnabled'];
+		this.socketServerHost = config['socketServerHost'];
+		this.socketServerPort = config['socketServerPort'];
+		this.socketServerChatID = config['socketServerChatID'];
+		this.debug = config['debug'];
+		this.DOMbuffering = false;
+		this.DOMbuffer = "";
+		this.retryTimerDelay = (this.inactiveTimeout * 6000 - this.timerRate) / 4 + this.timerRate;
 	},
 
-	initDirectories: function() {
+	initDirectories: function () {
 		this.dirs = {};
-		this.dirs['emoticons'] 	= this.baseURL+'img/emoticons/';
-		this.dirs['sounds']		= this.baseURL+'sounds/';
-		this.dirs['flash']		= this.baseURL+'flash/';
+		this.dirs['emoticons'] = this.baseURL + 'img/emoticons/';
+		this.dirs['sounds'] = this.baseURL + 'sounds/';
+		this.dirs['flash'] = this.baseURL + 'flash/';
 	},
-	
-	initSettings: function() {
+
+	initSettings: function () {
 		var cookie = this.readCookie(this.sessionName + '_settings'),
-			i, settingsArray, setting, key, value, number;
+				i, settingsArray, setting, key, value, number;
 		this.settingsInitiated = true;
 		this.unusedSettings = {};
-		if(cookie) {
+		if (cookie) {
 			settingsArray = cookie.split('&');
-			for(i=0; i<settingsArray.length; i++) {
+			for (i = 0; i < settingsArray.length; i++) {
 				setting = settingsArray[i].split('=');
-				if(setting.length === 2) {
+				if (setting.length === 2) {
 					key = setting[0];
 					value = this.decodeText(setting[1]);
-					switch(value) {
+					switch (value) {
 						case 'true':
 							value = true;
 							break;
@@ -182,15 +188,15 @@ var ajaxChat = {
 							break;
 						default:
 							number = parseFloat(value);
-							if(!isNaN(number)) {
-								if(parseInt(number) === number) {
+							if (!isNaN(number)) {
+								if (parseInt(number) === number) {
 									value = parseInt(number);
 								} else {
 									value = number;
 								}
 							}
 					}
-					if(this.inArray(this.nonPersistentSettings, key)) {
+					if (this.inArray(this.nonPersistentSettings, key)) {
 						// The setting is not used, store it for the persistSettings method:
 						this.unusedSettings[key] = value;
 					} else {
@@ -201,70 +207,70 @@ var ajaxChat = {
 		}
 	},
 
-	persistSettings: function() {
+	persistSettings: function () {
 		var settingsArray;
-		if(this.settingsInitiated) {
+		if (this.settingsInitiated) {
 			settingsArray = [];
-			for(var property in this.settings) {
-				if(this.inArray(this.nonPersistentSettings, property)) {
-					if(this.unusedSettings && this.unusedSettings[property]) {
+			for (var property in this.settings) {
+				if (this.inArray(this.nonPersistentSettings, property)) {
+					if (this.unusedSettings && this.unusedSettings[property]) {
 						// Store the unusedSetting previously stored:
-						this.settings[property] = this.unusedSettings[property];	
+						this.settings[property] = this.unusedSettings[property];
 					} else {
 						continue;
 					}
 				}
 				settingsArray.push(property + '=' + this.encodeText(this.settings[property]));
 			}
-			this.createCookie(this.sessionName + '_settings', settingsArray.join('&'), this.cookieExpiration);	
+			this.createCookie(this.sessionName + '_settings', settingsArray.join('&'), this.cookieExpiration);
 		}
 	},
-	
-	getSettings: function() {
+
+	getSettings: function () {
 		return this.settings;
 	},
-	
-	getSetting: function(key) {
+
+	getSetting: function (key) {
 		// Only return null if setting is null or undefined, not if it is false:
-		for(var property in this.settings) {
-			if(property === key) {
+		for (var property in this.settings) {
+			if (property === key) {
 				return this.settings[key];
 			}
 		}
 		return null;
 	},
-	
-	setSetting: function(key, value) {
+
+	setSetting: function (key, value) {
 		this.settings[key] = value;
 	},
-	
-	initializeSettings: function() {
-		if(this.settings['persistFontColor'] && this.settings['fontColor']) {
+
+	initializeSettings: function () {
+		if (this.settings['persistFontColor'] && this.settings['fontColor']) {
 			// Set the inputField font color to the font color:
-			if(this.dom['inputField']) {
+			if (this.dom['inputField']) {
 				this.dom['inputField'].style.color = this.settings['fontColor'];
 			}
 		}
 	},
-	
-	initialize: function() {	
+
+	initialize: function () {
 		this.setUnloadHandler();
 		this.initializeDocumentNodes();
 		this.loadPageAttributes();
 		this.initEmoticons();
 		this.initColorCodes();
-		this.initializeSettings();		
+		this.initializeSettings();
 		this.setSelectedStyle();
 		this.customInitialize();
-		//preload the Alert icon (it can't display if there's no connection unless it's cached!)
+		// preload the Alert icon (it can't display if there's no connection unless it's cached!)
 		this.setStatus('retrying');
-		if(typeof this.initializeFunction === 'function') {
+		if (typeof this.initializeFunction === 'function') {
 			this.initializeFunction();
 		}
-		if(!this.isCookieEnabled()) {
+		if (!this.isCookieEnabled()) {
 			this.addChatBotMessageToChatList('/error CookiesRequired');
 		} else {
-			if(this.startChatOnLoad) {
+			if (this.startChatOnLoad) {
 				this.startChat();
 			} else {
 				this.setStartChatHandler();
@@ -273,207 +279,200 @@ var ajaxChat = {
 		}
 	},
 
-	requestTeaserContent: function() {
+	requestTeaserContent: function () {
 		var params = '&view=teaser';
 		params += '&getInfos=' + this.encodeText('userID,userName,userRole');
-		if(!isNaN(parseInt(this.loginChannelID))) {
-			params += '&channelID='+this.loginChannelID;
-		} else if(this.loginChannelName !== null) {
-			params += '&channelName='+this.encodeText(this.loginChannelName);
+		if (!isNaN(parseInt(this.loginChannelID))) {
+			params += '&channelID=' + this.loginChannelID;
+		} else if (this.loginChannelName !== null) {
+			params += '&channelName=' + this.encodeText(this.loginChannelName);
 		}
 		this.updateChat(params);
 	},
-	
-	setStartChatHandler: function() {
-		if(this.dom['inputField']) {
-			this.dom['inputField'].onfocus = function() {
+
+	setStartChatHandler: function () {
+		if (this.dom['inputField']) {
+			this.dom['inputField'].onfocus = function () {
 				ajaxChat.startChat();
 				// Reset the onfocus event on first call:
 				ajaxChat.dom['inputField'].onfocus = '';
-			};		
+			};
 		}
 	},
-	
-	startChat: function() {
+
+	startChat: function () {
 		this.chatStarted = true;
-		if(this.dom['inputField'] && this.settings['autoFocus']) {
+		if (this.dom['inputField'] && this.settings['autoFocus']) {
 			//this.dom['inputField'].focus();
 		}
 		this.loadFlashInterface();
 		this.startChatUpdate();
 	},
 
-	loadPageAttributes: function() {
-		var htmlTag			= document.getElementsByTagName('html')[0];
-		this.langCode		= htmlTag.getAttribute('lang')	? htmlTag.getAttribute('lang')	: 'en';
-		this.baseDirection	= htmlTag.getAttribute('dir')	? htmlTag.getAttribute('dir')	: 'ltr';		
+	loadPageAttributes: function () {
+		var htmlTag = document.getElementsByTagName('html')[0];
+		this.langCode = htmlTag.getAttribute('lang') ? htmlTag.getAttribute('lang') : 'en';
+		this.baseDirection = htmlTag.getAttribute('dir') ? htmlTag.getAttribute('dir') : 'ltr';
 	},
 
-	setLoadHandler: function() {
+	setLoadHandler: function () {
+		var self = this;
 		// Make sure initialize() is called on page load:
-  		var onload = window.onload;
-		if(typeof onload !== 'function') {
-			window.onload = function() {
-				ajaxChat.initialize();
-			};
-		} else {
-			window.onload = function() {
-				onload();
-				ajaxChat.initialize();
-			};
-		}		
+		this.addEvent(window, 'load', function () {
+			self.initialize();
+		});
 	},
-	
-	setUnloadHandler: function() {
+
+	setUnloadHandler: function () {
 		// Make sure finalize() is called on page unload:
-  		var onunload = window.onunload;
-		if(typeof onunload !== 'function') {
-			window.onunload = function() {
+		var onunload = window.onunload;
+		if (typeof onunload !== 'function') {
+			window.onunload = function () {
 				ajaxChat.finalize();
 			};
 		} else {
-			window.onunload = function() {
+			window.onunload = function () {
 				ajaxChat.finalize();
 				onunload();
 			};
 		}
 	},
 
-	updateDOM: function(id, str, prepend, overwrite) {
+	updateDOM: function (id, str, prepend, overwrite) {
 		var domNode = this.dom[id] ? this.dom[id] : document.getElementById(id);
-		if(!domNode) {
+		if (!domNode) {
 			return;
 		}
 		try {
 			// Test for validity before adding the string to the DOM:
 			domNode.cloneNode(false).innerHTML = str;
-			if(overwrite) {
+			if (overwrite) {
 				domNode.innerHTML = str;
-			} else if(prepend) {
+			} else if (prepend) {
 				domNode.innerHTML = str + domNode.innerHTML;
 			} else {
 				domNode.innerHTML += str;
 			}
-		} catch(e) {
-			this.addChatBotMessageToChatList('/error DOMSyntax '+id);
+		} catch (e) {
+			this.DOMbuffer = '';
+			this.addChatBotMessageToChatList('/error DOMSyntax ' + id);
 			this.updateChatlistView();
 		}
 	},
-	
-	initializeDocumentNodes: function() {
+
+	initializeDocumentNodes: function () {
 		this.dom = {};
-		for(var key in this.domIDs) {
+		for (var key in this.domIDs) {
 			this.dom[key] = document.getElementById(this.domIDs[key]);
 		}
 	},
 
-	initEmoticons: function() {
+	initEmoticons: function () {
 		this.DOMbuffer = "";
-		for(var i=0; i<this.emoticonCodes.length; i++) {
+		for (var i = 0; i < this.emoticonCodes.length; i++) {
 			// Replace specials characters in emoticon codes:
 			this.emoticonCodes[i] = this.encodeSpecialChars(this.emoticonCodes[i]);
 			this.DOMbuffer = this.DOMbuffer
-						+ '<a href="javascript:ajaxChat.insertText(\''
-						+ this.scriptLinkEncode(this.emoticonCodes[i])
-						+ '\');"><img src="'
-						+ this.dirs['emoticons']
-						+ this.emoticonFiles[i]
-						+ '" alt="'
-						+ this.emoticonCodes[i]
-						+ '" title="'
-						+ this.emoticonCodes[i]
-						+ '"/></a>';
-			}
-		if(this.dom['emoticonsContainer']) {
- 			this.updateDOM('emoticonsContainer', this.DOMbuffer);
- 		}
- 		this.DOMbuffer = "";
+					+ '<a href="javascript:ajaxChat.insertText(\''
+					+ this.scriptLinkEncode(this.emoticonCodes[i])
+					+ '\');"><img src="'
+					+ this.dirs['emoticons']
+					+ this.emoticonFiles[i]
+					+ '" alt="'
+					+ this.emoticonCodes[i]
+					+ '" title="'
+					+ this.emoticonCodes[i]
+					+ '"/></a>';
+		}
+		if (this.dom['emoticonsContainer']) {
+			this.updateDOM('emoticonsContainer', this.DOMbuffer);
+		}
+		this.DOMbuffer = "";
 	},
-	
-	initColorCodes: function() {
-		if(this.dom['colorCodesContainer']) {
+
+	initColorCodes: function () {
+		if (this.dom['colorCodesContainer']) {
 			this.DOMbuffer = "";
-			for(var i=0; i<this.colorCodes.length; i++) {
+			for (var i = 0; i < this.colorCodes.length; i++) {
 				this.DOMbuffer = this.DOMbuffer
-					+ '<a href="javascript:ajaxChat.setFontColor(\''
-					+ this.colorCodes[i]
-					+ '\');" style="background-color:'
-					+ this.colorCodes[i]
-					+ ';" title="'
-					+ this.colorCodes[i]
-					+ '"></a>'
-					+ "\n";
+						+ '<a href="javascript:ajaxChat.setFontColor(\''
+						+ this.colorCodes[i]
+						+ '\');" style="background-color:'
+						+ this.colorCodes[i]
+						+ ';" title="'
+						+ this.colorCodes[i]
+						+ '"></a>'
+						+ "\n";
 			}
 			this.updateDOM('colorCodesContainer', this.DOMbuffer);
- 			this.DOMbuffer = "";
+			this.DOMbuffer = "";
 		}
 	},
 
-
-	startChatUpdate: function() {
+	startChatUpdate: function () {
 		// Start the chat update and retrieve current user and channel info and set the login channel:
 		var infos = 'userID,userName,userRole,channelID,channelName';
-		if(this.socketServerEnabled) {
+		if (this.socketServerEnabled) {
 			infos += ',socketRegistrationID';
 		}
 		var params = '&getInfos=' + this.encodeText(infos);
-		if(!isNaN(parseInt(this.loginChannelID))) {
-			params += '&channelID='+this.loginChannelID;
-		} else if(this.loginChannelName !== null) {
-			params += '&channelName='+this.encodeText(this.loginChannelName);
+		if (!isNaN(parseInt(this.loginChannelID))) {
+			params += '&channelID=' + this.loginChannelID;
+		} else if (this.loginChannelName !== null) {
+			params += '&channelName=' + this.encodeText(this.loginChannelName);
 		}
 		this.updateChat(params);
 	},
-	
-	updateChat: function(paramString) {
+
+	updateChat: function (paramString) {
 		var requestUrl = this.ajaxURL
-						+ '&lastID='
-						+ this.lastID;
-		if(paramString) {
+				+ '&lastID='
+				+ this.lastID;
+		if (paramString) {
 			requestUrl += paramString;
 		}
-		this.makeRequest(requestUrl,'GET',null);
+		this.makeRequest(requestUrl, 'GET', null);
 	},
-	
-	loadFlashInterface: function() {
-		if(this.dom['flashInterfaceContainer']) {
+
+	loadFlashInterface: function () {
+		if (this.dom['flashInterfaceContainer']) {
 			this.updateDOM(
-				'flashInterfaceContainer',
-				'<object id="ajaxChatFlashInterface" style="position:absolute; left:-100px;" '
-				+'classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" '
-				+'codebase="'
-				+ window.location.protocol
-				+'//download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,0,0" '
-				+'height="1" width="1">'
-				+'<param name="flashvars" value="bridgeName=ajaxChat"/>'
-				+'<param name="src" value="'+this.dirs['flash']+'FABridge.swf"/>'
-				+'<embed name="ajaxChatFlashInterface" type="application/x-shockwave-flash" pluginspage="'
-				+ window.location.protocol
-				+'//www.macromedia.com/go/getflashplayer" '
-				+'src="'+this.dirs['flash']+'FABridge.swf" height="1" width="1" flashvars="bridgeName=ajaxChat"/>'
-				+'</object>'
-			);
+					'flashInterfaceContainer',
+					'<object id="ajaxChatFlashInterface" style="position:absolute; left:-100px;" '
+					+ 'classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" '
+					+ 'codebase="'
+					+ window.location.protocol
+					+ '//download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=9,0,0,0" '
+					+ 'height="1" width="1">'
+					+ '<param name="flashvars" value="bridgeName=ajaxChat"/>'
+					+ '<param name="src" value="' + this.dirs['flash'] + 'FABridge.swf"/>'
+					+ '<embed name="ajaxChatFlashInterface" type="application/x-shockwave-flash" pluginspage="'
+					+ window.location.protocol
+					+ '//www.macromedia.com/go/getflashplayer" '
+					+ 'src="' + this.dirs['flash'] + 'FABridge.swf" height="1" width="1" flashvars="bridgeName=ajaxChat"/>'
+					+ '</object>'
+					);
 			FABridge.addInitializationCallback('ajaxChat', this.flashInterfaceLoadCompleteHandler);
 		}
 	},
-	
-	flashInterfaceLoadCompleteHandler: function() {
+
+	flashInterfaceLoadCompleteHandler: function () {
 		ajaxChat.initializeFlashInterface();
 	},
 
-	initializeFlashInterface: function() {
-		if(this.socketServerEnabled) {
-			this.socketTimerRate = (this.inactiveTimeout-1)*60*1000;
+	initializeFlashInterface: function () {
+		if (this.socketServerEnabled) {
+			this.socketTimerRate = (this.inactiveTimeout - 1) * 60 * 1000;
 			this.socketConnect();
 		}
 		this.loadSounds();
 		this.initializeCustomFlashInterface();
 	},
 
-	socketConnect: function() {
-		if(!this.socketIsConnected) {
+	socketConnect: function () {
+		if (!this.socketIsConnected) {
 			try {
-				if(!this.socket && FABridge.ajaxChat) {
+				if (!this.socket && FABridge.ajaxChat) {
 					this.socket = FABridge.ajaxChat.create('flash.net.XMLSocket');
 					this.socket.addEventListener('connect', this.socketConnectHandler);
 					this.socket.addEventListener('close', this.socketCloseHandler);
@@ -482,89 +481,93 @@ var ajaxChat = {
 					this.socket.addEventListener('securityError', this.socketSecurityErrorHandler);
 				}
 				this.socket.connect(this.socketServerHost, this.socketServerPort);
-			} catch(e) {
-				//alert(e);
+			} catch (e) {
+				this.debugMessage('socketConnect', e);
 			}
 		}
 		clearTimeout(this.socketReconnectTimer);
 		this.socketReconnectTimer = null;
 	},
-	
-	socketConnectHandler: function(event) {
+
+	socketConnectHandler: function (event) {
 		ajaxChat.socketIsConnected = true;
 		// setTimeout is needed to avoid calling the flash interface recursively:
 		setTimeout(ajaxChat.socketRegister, 0);
 	},
 
-	socketCloseHandler: function(event) {
+	socketCloseHandler: function (event) {
 		ajaxChat.socketIsConnected = false;
-		if(ajaxChat.socket) {
+		if (ajaxChat.socket) {
 			clearTimeout(ajaxChat.timer);
 			ajaxChat.updateChat(null);
 		}
 	},
-	
-	socketDataHandler: function(event) {
+
+	socketDataHandler: function (event) {
 		ajaxChat.socketUpdate(event.getData());
 	},
 
-	socketIOErrorHandler: function(event) {
+	socketIOErrorHandler: function (event) {
 		// setTimeout is needed to avoid calling the flash interface recursively (e.g. sound on new messages):
-		setTimeout(function() { ajaxChat.addChatBotMessageToChatList('/error SocketIO'); }, 0);
+		setTimeout(function () {
+			ajaxChat.addChatBotMessageToChatList('/error SocketIO');
+		}, 0);
 		setTimeout(ajaxChat.updateChatlistView, 1);
 	},
 
-	socketSecurityErrorHandler: function(event) {
+	socketSecurityErrorHandler: function (event) {
 		// setTimeout is needed to avoid calling the flash interface recursively (e.g. sound on new messages):
-		setTimeout(function() { ajaxChat.addChatBotMessageToChatList('/error SocketSecurity'); }, 0);
+		setTimeout(function () {
+			ajaxChat.addChatBotMessageToChatList('/error SocketSecurity');
+		}, 0);
 		setTimeout(ajaxChat.updateChatlistView, 1);
 	},
 
-	socketRegister: function() {
-		if(this.socket && this.socketIsConnected) {
+	socketRegister: function () {
+		if (this.socket && this.socketIsConnected) {
 			try {
 				this.socket.send(
-					'<register chatID="'
-					+this.socketServerChatID
-					+'" userID="'
-					+this.userID
-					+'" regID="'
-					+this.socketRegistrationID
-					+'"/>'
-				);
-			} catch(e) {
-				//alert(e);
+						'<register chatID="'
+						+ this.socketServerChatID
+						+ '" userID="'
+						+ this.userID
+						+ '" regID="'
+						+ this.socketRegistrationID
+						+ '"/>'
+						);
+			} catch (e) {
+				this.debugMessage('socketRegister', e);
 			}
 		}
 	},
-	
-	loadXML: function(str) {
-		if(!arguments.callee.parser) {
+
+	loadXML: function (str) {
+		if (!arguments.callee.parser) {
 			try {
 				// DOMParser native implementation (Mozilla, Opera):
 				arguments.callee.parser = new DOMParser();
-			} catch(e) {
-				var customDOMParser = function() {};
-				if(navigator.appName === 'Microsoft Internet Explorer') {
+			} catch (e) {
+				var customDOMParser = function () {};
+				if (navigator.appName === 'Microsoft Internet Explorer') {
 					// IE implementation:
-					customDOMParser.prototype.parseFromString = function(str, contentType) {
-						if(!arguments.callee.XMLDOM) {
+					customDOMParser.prototype.parseFromString = function (str, contentType) {
+						if (!arguments.callee.XMLDOM) {
 							arguments.callee.XMLDOM = new ActiveXObject('Microsoft.XMLDOM');
 						}
 						arguments.callee.XMLDOM.loadXML(str);
-						return arguments.callee.XMLDOM;	
+						return arguments.callee.XMLDOM;
 					};
 				} else {
 					// Safari, Konqueror:
-					customDOMParser.prototype.parseFromString = function(str, contentType) {
-						if(!arguments.callee.httpRequest) {
+					customDOMParser.prototype.parseFromString = function (str, contentType) {
+						if (!arguments.callee.httpRequest) {
 							arguments.callee.httpRequest = new XMLHttpRequest();
 						}
 						arguments.callee.httpRequest.open(
-							'GET',
-							'data:text/xml;charset=utf-8,'+encodeURIComponent(str),
-							false
-						);
+								'GET',
+								'data:text/xml;charset=utf-8,' + encodeURIComponent(str),
+								false
+								);
 						arguments.callee.httpRequest.send(null);
 						return arguments.callee.httpRequest.responseXML;
 					};
@@ -574,189 +577,194 @@ var ajaxChat = {
 		}
 		return arguments.callee.parser.parseFromString(str, 'text/xml');
 	},
-	
-	socketUpdate: function(data) {
+
+	socketUpdate: function (data) {
 		var xmlDoc = this.loadXML(data);
-		if(xmlDoc) {
+		if (xmlDoc) {
 			this.handleOnlineUsers(xmlDoc.getElementsByTagName('user'));
 			// If the root node has the attribute "mode" set to "1" it is a channel message:
-			if((this.showChannelMessages || xmlDoc.firstChild.getAttribute('mode') !== '1') && !this.channelSwitch) {
+			if ((this.showChannelMessages || xmlDoc.firstChild.getAttribute('mode') !== '1') && !this.channelSwitch) {
 				var channelID = xmlDoc.firstChild.getAttribute('channelID');
-				if(channelID === this.channelID ||
-					parseInt(channelID) === parseInt(this.userID)+this.privateMessageDiff
-					) {
+				if (channelID === this.channelID ||
+						parseInt(channelID) === parseInt(this.userID) + this.privateMessageDiff
+						) {
 					this.handleChatMessages(xmlDoc.getElementsByTagName('message'));
 				}
 			}
 		}
 	},
 
-	setAudioVolume: function(volume) {
+	setAudioVolume: function (volume) {
 		volume = parseFloat(volume);
-		if(!isNaN(volume)) {
-			if(volume < 0) {
+		if (!isNaN(volume)) {
+			if (volume < 0) {
 				volume = 0.0;
-			} else if(volume > 1) {
+			} else if (volume > 1) {
 				volume = 1.0;
 			}
 			this.settings['audioVolume'] = volume;
 			try {
-				if(!this.soundTransform) {
-					this.soundTransform = FABridge.ajaxChat.create('flash.media.SoundTransform');					
+				if (!this.soundTransform) {
+					this.soundTransform = FABridge.ajaxChat.create('flash.media.SoundTransform');
 				}
 				this.soundTransform.setVolume(volume);
-			} catch(e) {
-				//alert(e);
+			} catch (e) {
+				this.debugMessage('setAudioVolume', e);
 			}
 		}
 	},
-	
-	loadSounds: function() {
+
+	loadSounds: function () {
 		try {
 			this.setAudioVolume(this.settings['audioVolume']);
 			this.sounds = {};
-			var sound,urlRequest;
-			for(var key in this.soundFiles) {
+			var sound, urlRequest;
+			for (var key in this.soundFiles) {
 				sound = FABridge.ajaxChat.create('flash.media.Sound');
 				sound.addEventListener('complete', this.soundLoadCompleteHandler);
 				sound.addEventListener('ioError', this.soundIOErrorHandler);
 				urlRequest = FABridge.ajaxChat.create('flash.net.URLRequest');
-				urlRequest.setUrl(this.dirs['sounds']+this.soundFiles[key]);
+				urlRequest.setUrl(this.dirs['sounds'] + this.soundFiles[key]);
 				sound.load(urlRequest);
 			}
-		} catch(e) {
-			alert(e);
+		} catch (e) {
+			this.debugMessage('loadSounds', e);
 		}
 	},
-	
-	soundLoadCompleteHandler: function(event) {
+
+	soundLoadCompleteHandler: function (event) {
 		var sound = event.getTarget();
-		for(var key in ajaxChat.soundFiles) {
+		for (var key in ajaxChat.soundFiles) {
 			// Get the sound key by matching the sound URL with the sound filename:
-			if((new RegExp(ajaxChat.soundFiles[key])).test(sound.getUrl())) {
+			if ((new RegExp(ajaxChat.soundFiles[key])).test(sound.getUrl())) {
 				// Add the loaded sound to the sounds list:
 				ajaxChat.sounds[key] = sound;
 			}
 		}
 	},
 
-	soundIOErrorHandler: function(event) {
+	soundIOErrorHandler: function (event) {
 		// setTimeout is needed to avoid calling the flash interface recursively (e.g. sound on new messages):
-		setTimeout(function() { ajaxChat.addChatBotMessageToChatList('/error SoundIO'); }, 0);
+		setTimeout(function () {
+			ajaxChat.addChatBotMessageToChatList('/error SoundIO');
+		}, 0);
 		setTimeout(ajaxChat.updateChatlistView, 1);
 	},
-	
-	soundPlayCompleteHandler: function(event) {
+
+	soundPlayCompleteHandler: function (event) {
 		// soundChannel event 'soundComplete'
 	},
 
-	playSound: function(soundID) {
-		if(this.sounds && this.sounds[soundID]) {
+	playSound: function (soundID) {
+		if (this.sounds && this.sounds[soundID]) {
 			try {
 				// play() parameters are
 				// startTime:Number (default = 0),
 				// loops:int (default = 0) and
 				// sndTransform:SoundTransform  (default = null)
 				return this.sounds[soundID].play(0, 0, this.soundTransform);
-			} catch(e) {
-				//alert(e);
+			} catch (e) {
+				this.debugMessage('playSound', e);
 			}
 		}
 		return null;
 	},
-	
-playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
-        if(this.settings['audio'] && this.sounds && this.lastID && !this.channelSwitch) {
-            switch(userID) {
-                case this.chatBotID:
-                    var messageParts = messageText.split(' ', 1);
-                    switch(messageParts[0]) {
-                        case '/login':
-                        case '/channelEnter':
-                            this.playSound(this.settings['soundEnter']);
-                            break;
-                        case '/logout':
-                        case '/channelLeave':
-                        case '/kick':
-                            this.playSound(this.settings['soundLeave']);
-                            break;
-                        case '/error':
-                            this.playSound(this.settings['soundError']);
-                            break;
-                        default:
-                            this.playSound(this.settings['soundChatBot']);
-                    }
-                    break;
-                case this.userID:
-                    this.playSound(this.settings['soundSend']);
-                    break;
-                default:
-                    this.playSound(this.settings['soundReceive']);
+
+	playSoundOnNewMessage: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
+		var messageParts;
+		if (this.settings['audio'] && this.sounds && this.lastID && !this.channelSwitch) {
+			if (this.customSoundOnNewMessage(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) === false) {
+				return;
+			}
+			messageParts = messageText.split(' ', 1);
+			switch (userID) {
+				case this.chatBotID:
+					switch (messageParts[0]) {
+						case '/login':
+						case '/channelEnter':
+							this.playSound(this.settings['soundEnter']);
+							break;
+						case '/logout':
+						case '/channelLeave':
+						case '/kick':
+							this.playSound(this.settings['soundLeave']);
+							break;
+						case '/error':
+							this.playSound(this.settings['soundError']);
+							break;
+						default:
+							this.playSound(this.settings['soundChatBot']);
+					}
 					break;
-            }
-            //Notification
-        var permission,
-                timer = setTimeout(function () {
-                    permission = "default"
-                });
-        Notification.requestPermission(function (state) {
-            clearTimeout(timer);
-            permission = state
-        });
-        var notify = new Notification(userName, {
-            tag: channelID,
-            body: messageText
-        });
-        notify.onerror = function () {
-            console.log("permission state = default or denied");
-        };
-        }
+				case this.userID:
+					switch (messageParts[0]) {
+						case '/privmsgto':
+							this.playSound(this.settings['soundPrivate']);
+							break;
+						default:
+							this.playSound(this.settings['soundSend']);
+					}
+					break;
+				default:
+					switch (messageParts[0]) {
+						case '/privmsg':
+							this.playSound(this.settings['soundPrivate']);
+							break;
+						default:
+							this.playSound(this.settings['soundReceive']);
+					}
+					break;
+			}
+			//Notification
+			var permission,
+					timer = setTimeout(function () {
+						permission = "default"
+					});
+			Notification.requestPermission(function (state) {
+				clearTimeout(timer);
+				permission = state
+			});
+			var notify = new Notification(userName, {
+				tag: channelID,
+				body: messageText
+			});
+			notify.onerror = function () {
+				console.log("permission state = default or denied");
+			};
+		}
+	},
 
-    },
-
-	fillSoundSelection: function(selectionID, selectedSound) {
+	fillSoundSelection: function (selectionID, selectedSound) {
 		var selection = document.getElementById(selectionID);
 		// Skip the first, empty selection:
 		var i = 1;
-		for(var key in this.soundFiles) {
+		for (var key in this.soundFiles) {
 			selection.options[i] = new Option(key, key);
-			if(key === selectedSound){
+			if (key === selectedSound) {
 				selection.options[i].selected = true;
 			}
 			i++;
 		}
 	},
 
-	setStatus: function(newStatus) {
+	setStatus: function (newStatus) {
 		// status options are: ok, retrying, waiting
-		if (this.requestStatus !== 'retrying' || newStatus === 'ok') {
+		if (!(newStatus === 'waiting' && this.requestStatus === 'retrying')) {
 			this.requestStatus = newStatus;
 		}
-		
-		var statusIcon = document.getElementById('statusIconContainer');
 
-		if (statusIcon) {
-			switch (this.requestStatus) {
-				case 'ok':
-					this.setClass(statusIcon, 'statusContainerOff');
-					break;
-				case 'waiting':
-					this.setClass(statusIcon, 'statusContainerOn');
-					break;
-				case 'retrying':
-					this.setClass(statusIcon, 'statusContainerAlert');
-					break;
-			}
+		if (this.dom['statusIcon']) {
+			this.dom['statusIcon'].className = this.requestStatus;
 		}
 	},
-	
-	forceNewRequest: function() {
-		ajaxChat.updateChat(null); 
+
+	forceNewRequest: function () {
+		ajaxChat.updateChat(null);
 		ajaxChat.setStatus('retrying');
 	},
-	
-	getHttpRequest: function(identifier) {
-		if(!this.httpRequest[identifier]) {
+
+	getHttpRequest: function (identifier) {
+		if (!this.httpRequest[identifier]) {
 			if (window.XMLHttpRequest) {
 				this.httpRequest[identifier] = new XMLHttpRequest();
 				if (this.httpRequest[identifier].overrideMimeType) {
@@ -776,14 +784,15 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		return this.httpRequest[identifier];
 	},
 
-	makeRequest: function(url, method, data) {
-		var identifier;
-		this.setStatus('waiting');
-		
+	makeRequest: function (url, method, data) {
+		var self = this,
+				identifier;
+		self.setStatus('waiting');
+
 		try {
-			if(data) {
+			if (data) {
 				// Create up to 50 HTTPRequest objects:
-				if(!arguments.callee.identifier || arguments.callee.identifier > 50) {
+				if (!arguments.callee.identifier || arguments.callee.identifier > 50) {
 					arguments.callee.identifier = 1;
 				} else {
 					arguments.callee.identifier++;
@@ -793,50 +802,54 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				identifier = 0;
 			}
 			//if the response takes longer than retryTimerDelay to give an OK status, abort the connection and start again.
-			this.retryTimer = setTimeout(ajaxChat.forceNewRequest, ajaxChat.retryTimerDelay);
-			
-			this.getHttpRequest(identifier).open(method, url, true);
-			this.getHttpRequest(identifier).onreadystatechange = function() {
+			self.retryTimer = setTimeout(ajaxChat.forceNewRequest, ajaxChat.retryTimerDelay);
+
+			self.getHttpRequest(identifier).open(method, url, true);
+			self.getHttpRequest(identifier).onreadystatechange = function () {
 				try {
 					ajaxChat.handleResponse(identifier);
-				} catch(e) {
+				} catch (e) {
 					try {
 						clearTimeout(ajaxChat.timer);
-					} catch(e) {
-						//alert(e);
+					} catch (e) {
+						self.debugMessage('makeRequest::clearTimeout', e);
 					}
 					try {
-						if(data) {
+						if (data) {
 							ajaxChat.addChatBotMessageToChatList('/error ConnectionTimeout');
 							ajaxChat.setStatus('retrying');
 							ajaxChat.updateChatlistView();
 						}
-					} catch(e) {
-						//alert(e);
+					} catch (e) {
+						self.debugMessage('makeRequest::logRetry', e);
 					}
-					try {				
-						ajaxChat.timer = setTimeout(function() { ajaxChat.updateChat(null); }, ajaxChat.timerRate);
-					} catch(e) {
-						//alert(e);
+					try {
+						ajaxChat.timer = setTimeout(function () {
+							ajaxChat.updateChat(null);
+						}, ajaxChat.timerRate);
+					} catch (e) {
+						self.debugMessage('makeRequest::setTimeout', e);
 					}
 				}
 			};
-			if(method === 'POST') {
-				this.getHttpRequest(identifier).setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+			if (method === 'POST') {
+				self.getHttpRequest(identifier).setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 			}
-			this.getHttpRequest(identifier).send(data);
-		} catch(e) {
+			self.getHttpRequest(identifier).send(data);
+		} catch (e) {
 			clearTimeout(this.timer);
-			if(data) {
-				this.addChatBotMessageToChatList('/error ConnectionTimeout');
+			if (data) {
+				self.addChatBotMessageToChatList('/error ConnectionTimeout');
 				ajaxChat.setStatus('retrying');
-				this.updateChatlistView();
+				self.updateChatlistView();
 			}
-			this.timer = setTimeout(function() { ajaxChat.updateChat(null); }, this.timerRate);
+			self.timer = setTimeout(function () {
+				ajaxChat.updateChat(null);
+			}, self.timerRate);
 		}
 	},
-		
-	handleResponse: function(identifier) {
+
+	handleResponse: function (identifier) {
 		var xmlDoc;
 		if (this.getHttpRequest(identifier).readyState === 4) {
 			if (this.getHttpRequest(identifier).status === 200) {
@@ -850,21 +863,21 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 					this.updateChatlistView();
 					return false;
 				} else {
-					this.addChatBotMessageToChatList('/error ConnectionStatus '+this.getHttpRequest(identifier).status);
+					this.addChatBotMessageToChatList('/error ConnectionStatus ' + this.getHttpRequest(identifier).status);
 					this.setStatus('retrying');
-					this.updateChatlistView();				
+					this.updateChatlistView();
 					return false;
 				}
 			}
 		}
-		if(!xmlDoc) {
+		if (!xmlDoc) {
 			return false;
 		}
 		this.handleXML(xmlDoc);
 		return true;
 	},
-	
-	handleXML: function(xmlDoc) {
+
+	handleXML: function (xmlDoc) {
 		this.handleInfoMessages(xmlDoc.getElementsByTagName('info'));
 		this.handleOnlineUsers(xmlDoc.getElementsByTagName('user'));
 		this.handleChatMessages(xmlDoc.getElementsByTagName('message'));
@@ -872,41 +885,46 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		this.setChatUpdateTimer();
 	},
 
-	setChatUpdateTimer: function() {
+	setChatUpdateTimer: function () {
 		clearTimeout(this.timer);
-		if(this.chatStarted) {
+		if (this.chatStarted) {
 			var timeout;
-			if(this.socketIsConnected) {
+			if (this.socketIsConnected) {
 				timeout = this.socketTimerRate;
 			} else {
 				timeout = this.timerRate;
-				if(this.socketServerEnabled && !this.socketReconnectTimer) {
+				if (this.socketServerEnabled && !this.socketReconnectTimer) {
 					// If the socket connection fails try to reconnect once in a minute:
 					this.socketReconnectTimer = setTimeout(ajaxChat.socketConnect, 60000);
 				}
 			}
-			this.timer = setTimeout(function() {ajaxChat.updateChat(null);}, timeout);			
+			this.timer = setTimeout(function () {
+				ajaxChat.updateChat(null);
+			}, timeout);
 		}
 	},
-	
-	handleInfoMessages: function(infoNodes) {
+
+	handleInfoMessages: function (infoNodes) {
 		var infoType, infoData;
-		for(var i=0; i<infoNodes.length; i++) {
+		for (var i = 0; i < infoNodes.length; i++) {
 			infoType = infoNodes[i].getAttribute('type');
 			infoData = infoNodes[i].firstChild ? infoNodes[i].firstChild.nodeValue : '';
 			this.handleInfoMessage(infoType, infoData);
 		}
 	},
-	
-	handleInfoMessage: function(infoType, infoData) {
-		switch(infoType) {
+
+	handleInfoMessage: function (infoType, infoData) {
+		if (this.handleCustomInfoMessage(infoType, infoData) === true) {
+			return;
+		}
+		switch (infoType) {
 			case 'channelSwitch':
 				this.clearChatList();
 				this.clearOnlineUsersList();
 				this.setSelectedChannel(infoData);
 				this.channelName = infoData;
 				this.channelSwitch = true;
-				break;			
+				break;
 			case 'channelName':
 				this.setSelectedChannel(infoData);
 				this.channelName = infoData;
@@ -916,7 +934,7 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				break;
 			case 'userID':
 				this.userID = infoData;
-				break;			
+				break;
 			case 'userName':
 				this.userName = infoData;
 				this.encodedUserName = this.scriptLinkEncode(this.userName);
@@ -924,7 +942,7 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				break;
 			case 'userRole':
 				this.userRole = infoData;
-				break;				
+				break;
 			case 'logout':
 				this.handleLogout(infoData);
 				return;
@@ -932,55 +950,57 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				this.socketRegistrationID = infoData;
 				this.socketRegister();
 			default:
-				this.handleCustomInfoMessage(infoType, infoData);
+				return;
 		}
 	},
 
-	handleOnlineUsers: function(userNodes) {
-		if(userNodes.length) {
-			var index,userID,userName,userRole,i,
-				onlineUsers = [];
-			for(i=0; i<userNodes.length; i++) {
+	handleOnlineUsers: function (userNodes) {
+		if (userNodes.length) {
+			var index, userID, userName, userRole, i,
+					onlineUsers = [];
+			for (i = 0; i < userNodes.length; i++) {
 				userID = userNodes[i].getAttribute('userID');
 				userName = userNodes[i].firstChild ? userNodes[i].firstChild.nodeValue : '';
 				userRole = userNodes[i].getAttribute('userRole');
 				onlineUsers.push(userID);
 				index = this.arraySearch(userID, this.usersList);
-				if(index === false) {
+				if (index === -1) {
 					this.addUserToOnlineList(
-						userID,
-						userName,
-						userRole
-					);
-				} else if(this.userNamesList[index] !== userName) {
+							userID,
+							userName,
+							userRole
+							);
+				} else if (this.userNamesList[index] !== userName) {
 					this.removeUserFromOnlineList(userID, index);
 					this.addUserToOnlineList(
-						userID,
-						userName,
-						userRole
-					);
+							userID,
+							userName,
+							userRole
+							);
 				}
 			}
 			// Clear the offline users from the online users list:
-			for(i=0; i<this.usersList.length; i++) {
-				if(!this.inArray(onlineUsers, this.usersList[i])) {
+			for (i = 0; i < this.usersList.length; i++) {
+				if (!this.inArray(onlineUsers, this.usersList[i])) {
 					this.removeUserFromOnlineList(this.usersList[i], i);
 				}
-			}	
-			this.setOnlineListRowClasses();		
-		}	
+			}
+			this.setOnlineListRowClasses();
+		}
 	},
 
-	handleChatMessages: function(messageNodes) {
-		var userNode,userName,textNode,messageText,i;
-		if(messageNodes.length) {
-			for(i=0; i<messageNodes.length; i++) {
+	handleChatMessages: function (messageNodes) {
+		var userNode, userName, textNode, messageText, i;
+		if (messageNodes.length) {
+			for (i = 0; i < messageNodes.length; i++) {
 				this.DOMbuffering = true;
 				userNode = messageNodes[i].getElementsByTagName('username')[0];
 				userName = userNode.firstChild ? userNode.firstChild.nodeValue : '';
 				textNode = messageNodes[i].getElementsByTagName('text')[0];
 				messageText = textNode.firstChild ? textNode.firstChild.nodeValue : '';
-				if (i === (messageNodes.length - 1)) {this.DOMbuffering = false;}
+				if (i === (messageNodes.length - 1)) {
+					this.DOMbuffering = false;
+				}
 				this.addMessageToChatList(
 						new Date(messageNodes[i].getAttribute('dateTime')),
 						messageNodes[i].getAttribute('userID'),
@@ -990,66 +1010,66 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 						messageText,
 						messageNodes[i].getAttribute('channelID'),
 						messageNodes[i].getAttribute('ip')
-				);
+						);
 			}
 			this.DOMbuffering = false;
 			this.updateChatlistView();
-			this.lastID = messageNodes[messageNodes.length-1].getAttribute('id');
+			this.lastID = messageNodes[messageNodes.length - 1].getAttribute('id');
 		}
 	},
-	
-	setSelectedChannel: function(channel) {
+
+	setSelectedChannel: function (channel) {
 		var channelSelected = false,
-			i,option,text;
-		if(this.dom['channelSelection']) {
+				i, option, text;
+		if (this.dom['channelSelection']) {
 			// Replace the entities in the channel name with their character equivalent:
 			channel = this.decodeSpecialChars(channel);
-			for(i=0; i<this.dom['channelSelection'].options.length; i++) {
-				if(this.dom['channelSelection'].options[i].value === channel) {
+			for (i = 0; i < this.dom['channelSelection'].options.length; i++) {
+				if (this.dom['channelSelection'].options[i].value === channel) {
 					this.dom['channelSelection'].options[i].selected = true;
 					channelSelected = true;
 					break;
 				}
 			}
 			// The given channel is not in the list, add it:
-			if(!channelSelected) {
+			if (!channelSelected) {
 				option = document.createElement('option');
 				text = document.createTextNode(channel);
 				option.appendChild(text);
 				option.setAttribute('value', channel);
-				option.setAttribute('selected', 'selected');			
+				option.setAttribute('selected', 'selected');
 				this.dom['channelSelection'].appendChild(option);
 			}
 		}
 	},
 
-	removeUserFromOnlineList: function(userID, index) {
+	removeUserFromOnlineList: function (userID, index) {
 		this.usersList.splice(index, 1);
-		this.userNamesList.splice(index, 1);		
-		if(this.dom['onlineList']) {
+		this.userNamesList.splice(index, 1);
+		if (this.dom['onlineList']) {
 			this.dom['onlineList'].removeChild(this.getUserNode(userID));
 		}
 	},
-		
-	addUserToOnlineList: function(userID, userName, userRole) {
+
+	addUserToOnlineList: function (userID, userName, userRole) {
 		this.usersList.push(userID);
-		this.userNamesList.push(userName);	
-		if(this.dom['onlineList']) {
+		this.userNamesList.push(userName);
+		if (this.dom['onlineList']) {
 			this.updateDOM(
-				'onlineList',
-				this.getUserNodeString(userID, userName, userRole),
-				(this.userID === userID)
-			);
+					'onlineList',
+					this.getUserNodeString(userID, userName, userRole),
+					(this.userID === userID)
+					);
 		}
 	},
 
-	getUserNodeString: function(userID, userName, userRole) {
+	getUserNodeString: function (userID, userName, userRole) {
 		var encodedUserName, str;
-		if(this.userNodeString && userID === this.userID) {
+		if (this.userNodeString && userID === this.userID) {
 			return this.userNodeString;
 		} else {
 			encodedUserName = this.scriptLinkEncode(userName);
-			str	= '<div id="'
+			str = '<div id="'
 					+ this.getUserDocumentID(userID)
 					+ '"><a href="javascript:ajaxChat.toggleUserMenu(\''
 					+ this.getUserMenuDocumentID(userID)
@@ -1068,40 +1088,40 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 					+ this.getUserMenuDocumentID(userID)
 					+ '" style="display:none;">'
 					+ '</ul>'
-					+'</div>';
-			if(userID === this.userID) {
+					+ '</div>';
+			if (userID === this.userID) {
 				this.userNodeString = str;
 			}
-			return str;	
+			return str;
 		}
 	},
 
-	toggleUserMenu: function(menuID, userName, userID) {
-		// If the menu is empty, fill it with user node menu items before toggling it. 
+	toggleUserMenu: function (menuID, userName, userID) {
+		// If the menu is empty, fill it with user node menu items before toggling it.
 		var isInline = false;
-		if (menuID.indexOf('ium') >= 0 ) {
+		if (menuID.indexOf('ium') >= 0) {
 			isInline = true;
 		}
-		if(!document.getElementById(menuID).firstChild) {
+		if (!document.getElementById(menuID).firstChild) {
 			this.updateDOM(
-				menuID,
-				this.getUserNodeStringItems(
-					this.encodeText(this.addSlashes(this.getScriptLinkValue(userName))),
-					userID,
-					isInline
-				),
-				false,
-				true
-			)
+					menuID,
+					this.getUserNodeStringItems(
+							this.encodeText(this.addSlashes(this.getScriptLinkValue(userName))),
+							userID,
+							isInline
+							),
+					false,
+					true
+					);
 		}
 		this.showHide(menuID);
 		this.dom['chatList'].scrollTop = this.dom['chatList'].scrollHeight;
 	},
-	
-	getUserNodeStringItems: function(encodedUserName, userID, isInline) {
+
+	getUserNodeStringItems: function (encodedUserName, userID, isInline) {
 		var menu;
-		if(encodedUserName !== this.encodedUserName) {
-			menu 	= '<li><a href="javascript:ajaxChat.insertMessageWrapper(\'/msg '
+		if (encodedUserName !== this.encodedUserName) {
+			menu = '<li><a href="javascript:ajaxChat.insertMessageWrapper(\'/msg '
 					+ encodedUserName
 					+ ' \');">'
 					+ this.lang['userMenuSendPrivateMessage']
@@ -1125,24 +1145,24 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 					+ this.lang['userMenuIgnore']
 					+ '</a></li>';
 			if (isInline) {
-				menu	+= '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/invite '
-					+ encodedUserName
-					+ '\');">'
-					+ this.lang['userMenuInvite']
-					+ '</a></li>'
-					+ '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/uninvite '
-					+ encodedUserName
-					+ '\');">'
-					+ this.lang['userMenuUninvite']
-					+ '</a></li>'
-					+ '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/whereis '
-					+ encodedUserName
-					+ '\');">'
-					+ this.lang['userMenuWhereis']
-					+ '</a></li>';
+				menu += '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/invite '
+						+ encodedUserName
+						+ '\');">'
+						+ this.lang['userMenuInvite']
+						+ '</a></li>'
+						+ '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/uninvite '
+						+ encodedUserName
+						+ '\');">'
+						+ this.lang['userMenuUninvite']
+						+ '</a></li>'
+						+ '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/whereis '
+						+ encodedUserName
+						+ '\');">'
+						+ this.lang['userMenuWhereis']
+						+ '</a></li>';
 			}
-			if(this.userRole === '2' || this.userRole === '3') {
-				menu	+= '<li><a href="javascript:ajaxChat.insertMessageWrapper(\'/kick '
+			if (this.userRole === '2' || this.userRole === '3') {
+				menu += '<li><a href="javascript:ajaxChat.insertMessageWrapper(\'/kick '
 						+ encodedUserName
 						+ ' \');">'
 						+ this.lang['userMenuKick']
@@ -1154,15 +1174,15 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 						+ '</a></li>';
 			}
 		} else {
-			menu 	= '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/who\');">'
+			menu = '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/who\');">'
 					+ this.lang['userMenuWho']
-					+ '</a></li>'
-			if(this.userRole === '1' || this.userRole === '2' || this.userRole === '3') {
-				menu	+= '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/join\');">'
+					+ '</a></li>';
+			if (this.userRole === '1' || this.userRole === '2' || this.userRole === '3') {
+				menu += '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/join\');">'
 						+ this.lang['userMenuEnterPrivateRoom']
 						+ '</a></li>';
-				if(this.userRole === '2' || this.userRole === '3') {
-					menu	+= '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/bans\');">'
+				if (this.userRole === '2' || this.userRole === '3') {
+					menu += '<li><a href="javascript:ajaxChat.sendMessageWrapper(\'/bans\');">'
 							+ this.lang['userMenuBans']
 							+ '</a></li>';
 				}
@@ -1171,85 +1191,87 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		menu += this.getCustomUserMenuItems(encodedUserName, userID);
 		return menu;
 	},
-	
-	setOnlineListRowClasses: function() {
-		if(this.dom['onlineList']) {
-			var node = this.dom['onlineList'].firstChild;			
+
+	setOnlineListRowClasses: function () {
+		if (this.dom['onlineList']) {
+			var node = this.dom['onlineList'].firstChild;
 			var rowEven = false;
-			while(node) {
-				this.setClass(node, (rowEven ? 'rowEven' : 'rowOdd'));
+			while (node) {
+				node.className = (rowEven ? 'rowEven' : 'rowOdd');
 				node = node.nextSibling;
 				rowEven = !rowEven;
 			}
 		}
 	},
-	
-	clearChatList: function() {
-		while(this.dom['chatList'].hasChildNodes()) {
+
+	clearChatList: function () {
+		while (this.dom['chatList'].hasChildNodes()) {
 			this.dom['chatList'].removeChild(this.dom['chatList'].firstChild);
 		}
 	},
 
-	clearOnlineUsersList: function() {
+	clearOnlineUsersList: function () {
 		this.usersList = [];
 		this.userNamesList = [];
-		if(this.dom['onlineList']) {
-			while(this.dom['onlineList'].hasChildNodes()) {
+		if (this.dom['onlineList']) {
+			while (this.dom['onlineList'].hasChildNodes()) {
 				this.dom['onlineList'].removeChild(this.dom['onlineList'].firstChild);
 			}
 		}
 	},
 
-	getEncodedChatBotName: function() {
-		if(typeof arguments.callee.encodedChatBotName === 'undefined') {
+	getEncodedChatBotName: function () {
+		if (typeof arguments.callee.encodedChatBotName === 'undefined') {
 			arguments.callee.encodedChatBotName = this.encodeSpecialChars(this.chatBotName);
 		}
 		return arguments.callee.encodedChatBotName;
 	},
-	
-	addChatBotMessageToChatList: function(messageText) {
+
+	addChatBotMessageToChatList: function (messageText) {
 		this.addMessageToChatList(
-			new Date(),
-			this.chatBotID,
-			this.getEncodedChatBotName(),
-			4,
-			null,
-			messageText,
-			null
-		);
+				new Date(),
+				this.chatBotID,
+				this.getEncodedChatBotName(),
+				4,
+				null,
+				messageText,
+				null
+				);
 	},
-	
-	addMessageToChatList: function(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
+
+	addMessageToChatList: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
 		// Prevent adding the same message twice:
-		if(this.getMessageNode(messageID)) {
+		if (this.getMessageNode(messageID)) {
 			return;
-		}		
-		if(!this.onNewMessage(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip)) {
+		}
+		if (!this.onNewMessage(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip)) {
 			return;
 		}
 		this.DOMbufferRowClass = this.DOMbufferRowClass === 'rowEven' ? 'rowOdd' : 'rowEven';
-		this.DOMbuffer = this.DOMbuffer + 
-			this.getChatListMessageString(
-				dateObject, userID, userName, userRole, messageID, messageText, channelID, ip
-			);
-		if(!this.DOMbuffering){
- 			this.updateDOM('chatList', this.DOMbuffer);
- 			this.DOMbuffer = "";
- 		}
+		this.DOMbuffer = this.DOMbuffer +
+				this.getChatListMessageString(
+						dateObject, userID, userName, userRole, messageID, messageText, channelID, ip
+						);
+		if (!this.DOMbuffering) {
+			this.updateDOM('chatList', this.DOMbuffer);
+			this.DOMbuffer = "";
+		}
 	},
 
-	getChatListMessageString: function(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
-		var rowClass = this.DOMbufferRowClass;
-		var userClass = this.getRoleClass(userRole);
-		var colon;
-		if(messageText.indexOf('/action') === 0 || messageText.indexOf('/me') === 0 || messageText.indexOf('/privaction') === 0) {
+	getChatListMessageString: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
+		var rowClass = this.DOMbufferRowClass,
+				userClass = this.getRoleClass(userRole),
+				colon = ': ';
+		if (messageText.indexOf('/action') === 0 || messageText.indexOf('/me') === 0 || messageText.indexOf('/privaction') === 0) {
 			userClass += ' action';
 			colon = ' ';
-		} else {
-			colon = ': ';
 		}
+		if (messageText.indexOf('/privmsg') === 0 || messageText.indexOf('/privmsgto') === 0 || messageText.indexOf('/privaction') === 0) {
+			rowClass += ' private';
+		}
+
 		var dateTime = this.settings['dateFormat'] ? '<span class="dateTime">'
-						+ this.formatDate(this.settings['dateFormat'], dateObject) + '</span> ' : '';
+				+ this.formatDate(this.settings['dateFormat'], dateObject) + '</span> ' : '';
 		return	'<div id="'
 				+ this.getMessageDocumentID(messageID)
 				+ '" class="'
@@ -1270,38 +1292,38 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				+ this.replaceText(messageText)
 				+ '</div>';
 	},
-	
-	getChatListUserNameTitle: function(userID, userName, userRole, ip) {
-		return (ip !== null) ? ' title="IP: ' + ip + '"' : '';		
+
+	getChatListUserNameTitle: function (userID, userName, userRole, ip) {
+		return (ip !== null) ? ' title="IP: ' + ip + '"' : '';
 	},
-	
-	getMessageDocumentID: function(messageID) {
-		return ((messageID === null) ? 'ajaxChat_lm_'+(this.localID++) : 'ajaxChat_m_'+messageID);
+
+	getMessageDocumentID: function (messageID) {
+		return ((messageID === null) ? 'ajaxChat_lm_' + (this.localID++) : 'ajaxChat_m_' + messageID);
 	},
-	
-	getMessageNode: function(messageID) {
+
+	getMessageNode: function (messageID) {
 		return ((messageID === null) ? null : document.getElementById(this.getMessageDocumentID(messageID)));
 	},
-	
-	getUserDocumentID: function(userID) {
-		return 'ajaxChat_u_'+userID;
+
+	getUserDocumentID: function (userID) {
+		return 'ajaxChat_u_' + userID;
 	},
-	
-	getUserNode: function(userID) {
+
+	getUserNode: function (userID) {
 		return document.getElementById(this.getUserDocumentID(userID));
 	},
 
-	getUserMenuDocumentID: function(userID) {
-		return 'ajaxChat_um_'+userID;
+	getUserMenuDocumentID: function (userID) {
+		return 'ajaxChat_um_' + userID;
 	},
-	
-	getInlineUserMenuDocumentID: function(menuID, index) {
-		return 'ajaxChat_ium_'+menuID+'_'+index;
+
+	getInlineUserMenuDocumentID: function (menuID, index) {
+		return 'ajaxChat_ium_' + menuID + '_' + index;
 	},
-	
-	getDeletionLink: function(messageID, userID, userRole, channelID) {
-		if(messageID !== null && this.isAllowedToDeleteMessage(messageID, userID, userRole, channelID)) {
-			if(!arguments.callee.deleteMessage) {
+
+	getDeletionLink: function (messageID, userID, userRole, channelID) {
+		if (messageID !== null && this.isAllowedToDeleteMessage(messageID, userID, userRole, channelID)) {
+			if (!arguments.callee.deleteMessage) {
 				arguments.callee.deleteMessage = this.encodeSpecialChars(this.lang['deleteMessage']);
 			}
 			return	'<a class="delete" title="'
@@ -1312,25 +1334,28 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		}
 		return '';
 	},
-	
-	isAllowedToDeleteMessage: function(messageID, userID, userRole, channelID) {
-		if((((this.userRole === '1' && this.allowUserMessageDelete && (userID === this.userID ||
-			parseInt(channelID) === parseInt(this.userID)+this.privateMessageDiff ||
-			parseInt(channelID) === parseInt(this.userID)+this.privateChannelDiff)) ||
-			this.userRole === '2') && userRole !== '3' && userRole !== '4') || this.userRole === '3') {
+
+	isAllowedToDeleteMessage: function (messageID, userID, userRole, channelID) {
+		if ((((this.userRole === '1' && this.allowUserMessageDelete && (userID === this.userID ||
+				parseInt(channelID) === parseInt(this.userID) + this.privateMessageDiff ||
+				parseInt(channelID) === parseInt(this.userID) + this.privateChannelDiff)) ||
+				(this.userRole === '5' && this.allowUserMessageDelete && (userID === this.userID ||
+						parseInt(channelID) === parseInt(this.userID) + this.privateMessageDiff ||
+						parseInt(channelID) === parseInt(this.userID) + this.privateChannelDiff)) ||
+				this.userRole === '2') && userRole !== '3' && userRole !== '4') || this.userRole === '3') {
 			return true;
 		}
 		return false;
 	},
-	
-	onNewMessage: function(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
-		if(!this.customOnNewMessage(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip)) {
+
+	onNewMessage: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
+		if (!this.customOnNewMessage(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip)) {
 			return false;
 		}
-		if(this.ignoreMessage(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip)) {
+		if (this.ignoreMessage(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip)) {
 			return false;
 		}
-		if(this.parseDeleteMessageCommand(messageText)) {
+		if (this.parseDeleteMessageCommand(messageText)) {
 			return false;
 		}
 		this.blinkOnNewMessage(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip);
@@ -1338,129 +1363,133 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		return true;
 	},
 
-	parseDeleteMessageCommand: function(messageText) {
-		if(messageText.indexOf('/delete') === 0) {
+	parseDeleteMessageCommand: function (messageText) {
+		if (messageText.indexOf('/delete') === 0) {
 			var messageID = messageText.substr(8);
 			var messageNode = this.getMessageNode(messageID);
-			if(messageNode) {
+			if (messageNode) {
 				var nextSibling = messageNode.nextSibling;
 				try {
 					this.dom['chatList'].removeChild(messageNode);
-					if(nextSibling) {
+					if (nextSibling) {
 						this.updateChatListRowClasses(nextSibling);
 					}
-				} catch(e) {
+				} catch (e) {
 				}
 			}
 			return true;
 		}
 		return false;
 	},
-	
-	blinkOnNewMessage: function(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
-		if(this.settings['blink'] && this.lastID && !this.channelSwitch && userID !== this.userID) {
-			// Modyfied by YetiForce CRM //
-			parent.AJAXChat_Chat_Js.registerUnreadMessage();
-			// Modyfied by YetiForce CRM //
+
+	blinkOnNewMessage: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
+		if (this.settings['blink'] && this.lastID && !this.channelSwitch && userID !== this.userID) {
 			clearInterval(this.blinkInterval);
 			this.blinkInterval = setInterval(
-				'ajaxChat.blinkUpdate(\''+this.addSlashes(this.decodeSpecialChars(userName))+'\')',
-				this.settings['blinkInterval']
-			);
+					'ajaxChat.blinkUpdate(\'' + this.addSlashes(this.decodeSpecialChars(userName)) + '\')',
+					this.settings['blinkInterval']
+					);
 		}
 	},
-	
-	blinkUpdate: function(blinkStr) {
-		if(!this.originalDocumentTitle) {
+
+	blinkUpdate: function (blinkStr) {
+		if (!this.originalDocumentTitle) {
 			this.originalDocumentTitle = document.title;
 		}
-		if(!arguments.callee.blink) {
-			document.title = '[@ ] '+blinkStr+' - '+this.originalDocumentTitle;
+		if (!arguments.callee.blink) {
+			document.title = '[@ ] ' + blinkStr + ' - ' + this.originalDocumentTitle;
 			arguments.callee.blink = 1;
-		} else if(arguments.callee.blink > this.settings['blinkIntervalNumber']) {
+		} else if (arguments.callee.blink > this.settings['blinkIntervalNumber']) {
 			clearInterval(this.blinkInterval);
 			document.title = this.originalDocumentTitle;
 			arguments.callee.blink = 0;
 		} else {
-			if(arguments.callee.blink % 2 !== 0) {
-				document.title = '[@ ] '+blinkStr+' - '+this.originalDocumentTitle;
+			if (arguments.callee.blink % 2 !== 0) {
+				document.title = '[@ ] ' + blinkStr + ' - ' + this.originalDocumentTitle;
 			} else {
-				document.title = '[ @] '+blinkStr+' - '+this.originalDocumentTitle;
+				document.title = '[ @] ' + blinkStr + ' - ' + this.originalDocumentTitle;
 			}
 			arguments.callee.blink++;
 		}
 	},
-	
-	updateChatlistView: function() {		
-		if(this.dom['chatList'].childNodes && this.settings['maxMessages']) {
-			while(this.dom['chatList'].childNodes.length > this.settings['maxMessages']) {
+
+	updateChatlistView: function () {
+		if (this.dom['chatList'].childNodes && this.settings['maxMessages']) {
+			while (this.dom['chatList'].childNodes.length > this.settings['maxMessages']) {
 				this.dom['chatList'].removeChild(this.dom['chatList'].firstChild);
 			}
 		}
-		
-		if(this.settings['autoScroll']) {
-			this.dom['chatList'].scrollTop = this.dom['chatList'].scrollHeight;
+
+		if (this.settings['autoScroll']) {
+			var self = this;
+			setTimeout(function () {
+				self.scrollChatList();
+			}, 50);
 		}
 	},
-	
-	encodeText: function(text) {
+
+	scrollChatList: function () {
+		this.dom['chatList'].scrollTop = this.dom['chatList'].scrollHeight;
+	},
+
+	encodeText: function (text) {
 		return encodeURIComponent(text);
 	},
 
-	decodeText: function(text) {
+	decodeText: function (text) {
 		return decodeURIComponent(text);
 	},
 
-	utf8Encode: function(plainText) {
+	utf8Encode: function (plainText) {
 		var utf8Text = '';
-		for(var i=0; i<plainText.length; i++) {
-			var c=plainText.charCodeAt(i);
-			if(c<128) {
+		for (var i = 0; i < plainText.length; i++) {
+			var c = plainText.charCodeAt(i);
+			if (c < 128) {
 				utf8Text += String.fromCharCode(c);
-			} else if((c>127) && (c<2048)) {
-				utf8Text += String.fromCharCode((c>>6)|192);
-				utf8Text += String.fromCharCode((c&63)|128);
+			} else if ((c > 127) && (c < 2048)) {
+				utf8Text += String.fromCharCode((c >> 6) | 192);
+				utf8Text += String.fromCharCode((c & 63) | 128);
 			} else {
-				utf8Text += String.fromCharCode((c>>12)|224);
-				utf8Text += String.fromCharCode(((c>>6)&63)|128);
-				utf8Text += String.fromCharCode((c&63)|128);
+				utf8Text += String.fromCharCode((c >> 12) | 224);
+				utf8Text += String.fromCharCode(((c >> 6) & 63) | 128);
+				utf8Text += String.fromCharCode((c & 63) | 128);
 			}
 		}
 		return utf8Text;
 	},
 
-	utf8Decode: function(utf8Text) {
+	utf8Decode: function (utf8Text) {
 		var plainText = '';
-		var c,c2,c3;
-		var i=0;
-		while(i<utf8Text.length) {
+		var c, c2, c3;
+		var i = 0;
+		while (i < utf8Text.length) {
 			c = utf8Text.charCodeAt(i);
-			if(c<128) {
+			if (c < 128) {
 				plainText += String.fromCharCode(c);
 				i++;
-			} else if((c>191) && (c<224)) {
-				c2 = utf8Text.charCodeAt(i+1);
-				plainText += String.fromCharCode(((c&31)<<6) | (c2&63));
-				i+=2;
+			} else if ((c > 191) && (c < 224)) {
+				c2 = utf8Text.charCodeAt(i + 1);
+				plainText += String.fromCharCode(((c & 31) << 6) | (c2 & 63));
+				i += 2;
 			} else {
-				c2 = utf8Text.charCodeAt(i+1);
-				c3 = utf8Text.charCodeAt(i+2);
-				plainText += String.fromCharCode(((c&15)<<12) | ((c2&63)<<6) | (c3&63));
-				i+=3;
+				c2 = utf8Text.charCodeAt(i + 1);
+				c3 = utf8Text.charCodeAt(i + 2);
+				plainText += String.fromCharCode(((c & 15) << 12) | ((c2 & 63) << 6) | (c3 & 63));
+				i += 3;
 			}
 		}
 		return plainText;
 	},
 
-	encodeSpecialChars: function(text) {
+	encodeSpecialChars: function (text) {
 		return text.replace(
-			/[&<>'"]/g,
-			this.encodeSpecialCharsCallback
-		);
+				/[&<>'"]/g,
+				this.encodeSpecialCharsCallback
+				);
 	},
-	
-	encodeSpecialCharsCallback: function(str) {
-		switch(str) {
+
+	encodeSpecialCharsCallback: function (str) {
+		switch (str) {
 			case '&':
 				return '&amp;';
 			case '<':
@@ -1477,17 +1506,17 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		}
 	},
 
-	decodeSpecialChars: function(text) {
+	decodeSpecialChars: function (text) {
 		var regExp = new RegExp('(&amp;)|(&lt;)|(&gt;)|(&#39;)|(&quot;)', 'g');
-		
+
 		return text.replace(
-			regExp,
-			this.decodeSpecialCharsCallback
-		);
+				regExp,
+				this.decodeSpecialCharsCallback
+				);
 	},
-	
-	decodeSpecialCharsCallback: function(str) {
-		switch(str) {
+
+	decodeSpecialCharsCallback: function (str) {
+		switch (str) {
 			case '&amp;':
 				return '&';
 			case '&lt;':
@@ -1502,104 +1531,108 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				return str;
 		}
 	},
-	
-	inArray: function(haystack, needle) {
+
+	inArray: function (haystack, needle) {
 		var i = haystack.length;
-		while(i--) {
-			if(haystack[i] === needle) {
+		while (i--) {
+			if (haystack[i] === needle) {
 				return true;
 			}
 		}
 		return false;
 	},
 
-	arraySearch: function(needle, haystack) {
-		var i = haystack.length;
-		while(i--) {
-			if(haystack[i] === needle) {
-				return i;
+	arraySearch: function (needle, haystack) {
+		if (!Array.prototype.indexOf) { // IE<9
+			var i = haystack.length;
+			while (i--) {
+				if (haystack[i] === needle) {
+					return i;
+				}
 			}
+			return -1;
+		} else {
+			return haystack.indexOf(needle);
 		}
-	    return false;
 	},
 
-	stripTags: function(str) {
+	stripTags: function (str) {
 		if (!arguments.callee.regExp) {
 			arguments.callee.regExp = new RegExp('<\\/?[^>]+?>', 'g');
 		}
-		
+
 		return str.replace(arguments.callee.regExp, '');
 	},
 
-	stripBBCodeTags: function(str) {
+	stripBBCodeTags: function (str) {
 		if (!arguments.callee.regExp) {
 			arguments.callee.regExp = new RegExp('\\[\\/?[^\\]]+?\\]', 'g');
 		}
-		
-		return str.replace(arguments.callee.regExp, '');
-	},	
 
-	escapeRegExp: function(text) {
+		return str.replace(arguments.callee.regExp, '');
+	},
+
+	escapeRegExp: function (text) {
 		if (!arguments.callee.regExp) {
 			var specials = new Array(
-				'^', '$', '*', '+', '?', '.', '|', '/',
-				'(', ')', '[', ']', '{', '}', '\\'
-			);
+					'^', '$', '*', '+', '?', '.', '|', '/',
+					'(', ')', '[', ']', '{', '}', '\\'
+					);
 			arguments.callee.regExp = new RegExp(
-				'(\\' + specials.join('|\\') + ')', 'g'
-			);
+					'(\\' + specials.join('|\\') + ')', 'g'
+					);
 		}
 		return text.replace(arguments.callee.regExp, '\\$1');
 	},
-	
-	addSlashes: function(text) {
+
+	addSlashes: function (text) {
 		// Adding slashes in front of apostrophs and backslashes to ensure a valid JavaScript expression:
 		return text.replace(/\\/g, '\\\\').replace(/\'/g, '\\\'');
 	},
 
-	removeSlashes: function(text) {
+	removeSlashes: function (text) {
 		// Removing slashes added by calling addSlashes(text) previously:
 		return text.replace(/\\\\/g, '\\').replace(/\\\'/g, '\'');
 	},
 
-	formatDate: function(format, date) {
-		date = (date == null) ? new date() : date;
-		
+	formatDate: function (format, date) {
+		date = (date === null) ? new date() : date;
+
 		return format
-		.replace(/%Y/g, date.getFullYear())
-		.replace(/%m/g, this.addLeadingZero(date.getMonth()+1))
-		.replace(/%d/g, this.addLeadingZero(date.getDate()))
-		.replace(/%H/g, this.addLeadingZero(date.getHours()))
-		.replace(/%i/g, this.addLeadingZero(date.getMinutes()))
-		.replace(/%s/g, this.addLeadingZero(date.getSeconds()));
+				.replace(/%Y/g, date.getFullYear())
+				.replace(/%m/g, this.addLeadingZero(date.getMonth() + 1))
+				.replace(/%d/g, this.addLeadingZero(date.getDate()))
+				.replace(/%H/g, this.addLeadingZero(date.getHours()))
+				.replace(/%i/g, this.addLeadingZero(date.getMinutes()))
+				.replace(/%s/g, this.addLeadingZero(date.getSeconds()));
 	},
-	
-	addLeadingZero: function(number) {
+
+	addLeadingZero: function (number) {
 		number = number.toString();
-		if(number.length < 2) {
-			number = '0'+number;
+		if (number.length < 2) {
+			number = '0' + number;
 		}
 		return number;
 	},
 
-	getUserIDFromUserName: function(userName) {
+	getUserIDFromUserName: function (userName) {
 		var index = this.arraySearch(userName, this.userNamesList);
-		if(index !== false) {
+		if (index !== -1) {
 			return this.usersList[index];
 		}
 		return null;
 	},
 
-	getUserNameFromUserID: function(userID) {
+	getUserNameFromUserID: function (userID) {
 		var index = this.arraySearch(userID, this.usersList);
-		if(index !== false) {
+		if (index !== -1) {
 			return this.userNamesList[index];
 		}
 		return null;
 	},
 
-	getRoleClass: function(roleID) {
-		switch(parseInt(roleID)) {
+	getRoleClass: function (roleID) {
+		switch (parseInt(roleID)) {
 			case 0:
 				return 'guest';
 			case 1:
@@ -1610,17 +1643,44 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				return 'admin';
 			case 4:
 				return 'chatBot';
+			case 5:
+				return 'customUser';
 			default:
 				return 'default';
 		}
 	},
-	
-	handleInputFieldKeyPress: function(event) {
-		if(event.keyCode === 13 && !event.shiftKey) {
+
+	handleInputFieldKeyDown: function (event) {
+		var text, lastWord, i;
+
+		// Enter key without shift should send messages
+		if (event.keyCode === 13 && !event.shiftKey) {
 			this.sendMessage();
 			try {
 				event.preventDefault();
-			} catch(e) {
+			} catch (e) {
+				event.returnValue = false; // IE<9
+			}
+			return false;
+		}
+		// Tab should complete usernames
+		else if (event.keyCode === 9 && !event.shiftKey) {
+			text = this.dom['inputField'].value;
+			if (text) {
+				lastWord = text.match(/\w+/g).slice(-1)[0];
+
+				if (lastWord.length > 2) {
+					for (i = 0; i < this.userNamesList.length; i++) {
+						if (this.userNamesList[i].replace("(", "").toLowerCase().indexOf(lastWord.toLowerCase()) === 0) {
+							this.dom['inputField'].value = text.replace(new RegExp(lastWord + '$'), this.userNamesList[i]);
+							break;
+						}
+					}
+				}
+			}
+			try {
+				event.preventDefault();
+			} catch (e) {
 				event.returnValue = false; // IE
 			}
 			return false;
@@ -1628,45 +1688,45 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		return true;
 	},
 
-	handleInputFieldKeyUp: function(event) {
+	handleInputFieldKeyUp: function (event) {
 		this.updateMessageLengthCounter();
 	},
-	
-	updateMessageLengthCounter: function() {
-		if(this.dom['messageLengthCounter']) {
+
+	updateMessageLengthCounter: function () {
+		if (this.dom['messageLengthCounter']) {
 			this.updateDOM(
-				'messageLengthCounter',
-				this.dom['inputField'].value.length	+ '/' + this.messageTextMaxLength,
-				false,
-				true
-			);
+					'messageLengthCounter',
+					this.dom['inputField'].value.length + '/' + this.messageTextMaxLength,
+					false,
+					true
+					);
 		}
 	},
-	
-	sendMessage: function(text) {
+
+	sendMessage: function (text) {
 		text = text ? text : this.dom['inputField'].value;
-		if(!text) {
+		if (!text) {
 			return;
 		}
 		text = this.parseInputMessage(text);
-		if(text) {
+		if (text) {
 			clearTimeout(this.timer);
-			var message = 	'lastID='
-							+ this.lastID
-							+ '&text='
-							+ this.encodeText(text);				
-			this.makeRequest(this.ajaxURL,'POST',message);
+			var message = 'lastID='
+					+ this.lastID
+					+ '&text='
+					+ this.encodeText(text);
+			this.makeRequest(this.ajaxURL, 'POST', message);
 		}
 		this.dom['inputField'].value = '';
 		this.dom['inputField'].focus();
 		this.updateMessageLengthCounter();
 	},
-	
-	parseInputMessage: function(text) {
+
+	parseInputMessage: function (text) {
 		var textParts;
-		if(text.charAt(0) === '/') {
+		if (text.charAt(0) === '/') {
 			textParts = text.split(' ');
-			switch(textParts[0]) {
+			switch (textParts[0]) {
 				case '/ignore':
 					text = this.parseIgnoreInputCommand(text, textParts);
 					break;
@@ -1677,38 +1737,38 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				default:
 					text = this.parseCustomInputCommand(text, textParts);
 			}
-			if(text && this.settings['persistFontColor'] && this.settings['fontColor']) {
+			if (text && this.settings['persistFontColor'] && this.settings['fontColor']) {
 				text = this.assignFontColorToCommandMessage(text, textParts);
 			}
 		} else {
 			text = this.parseCustomInputMessage(text);
-			if(text && this.settings['persistFontColor'] && this.settings['fontColor']) {
+			if (text && this.settings['persistFontColor'] && this.settings['fontColor']) {
 				text = this.assignFontColorToMessage(text);
 			}
 		}
 		return text;
 	},
-	
-	assignFontColorToMessage: function(text) {
-		return '[color='+this.settings['fontColor']+']'+text+'[/color]';
+
+	assignFontColorToMessage: function (text) {
+		return '[color=' + this.settings['fontColor'] + ']' + text + '[/color]';
 	},
 
-	assignFontColorToCommandMessage: function(text, textParts) {
-		switch(textParts[0]) {
+	assignFontColorToCommandMessage: function (text, textParts) {
+		switch (textParts[0]) {
 			case '/msg':
 			case '/describe':
-				if(textParts.length > 2) {
-					return	textParts[0]+' '+textParts[1]+' '
-							+ '[color='+this.settings['fontColor']+']'
+				if (textParts.length > 2) {
+					return	textParts[0] + ' ' + textParts[1] + ' '
+							+ '[color=' + this.settings['fontColor'] + ']'
 							+ textParts.slice(2).join(' ')
 							+ '[/color]';
 				}
 				break;
 			case '/me':
 			case '/action':
-				if(textParts.length > 1) {
-					return	textParts[0]+' '
-							+ '[color='+this.settings['fontColor']+']'
+				if (textParts.length > 1) {
+					return	textParts[0] + ' '
+							+ '[color=' + this.settings['fontColor'] + ']'
 							+ textParts.slice(1).join(' ')
 							+ '[/color]';
 				}
@@ -1716,22 +1776,22 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		}
 		return text;
 	},
-	
-	parseIgnoreInputCommand: function(text, textParts) {
+
+	parseIgnoreInputCommand: function (text, textParts) {
 		var userName, ignoredUserNames = this.getIgnoredUserNames(), i;
-		if(textParts.length > 1) {
+		if (textParts.length > 1) {
 			userName = this.encodeSpecialChars(textParts[1]);
 			// Prevent adding the chatBot or current user to the list:
-			if(userName === this.userName || userName === this.getEncodedChatBotName()) {
+			if (userName === this.userName || userName === this.getEncodedChatBotName()) {
 				// Display the list of ignored users instead:
 				return this.parseIgnoreInputCommand(null, new Array('/ignore'));
 			}
-			if(ignoredUserNames.length > 0) {
+			if (ignoredUserNames.length > 0) {
 				i = ignoredUserNames.length;
-				while(i--) {
-					if(ignoredUserNames[i] === userName) {
-						ignoredUserNames.splice(i,1);
-						this.addChatBotMessageToChatList('/ignoreRemoved '+userName);
+				while (i--) {
+					if (ignoredUserNames[i] === userName) {
+						ignoredUserNames.splice(i, 1);
+						this.addChatBotMessageToChatList('/ignoreRemoved ' + userName);
 						this.setIgnoredUserNames(ignoredUserNames);
 						this.updateChatlistView();
 						return null;
@@ -1739,24 +1799,24 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				}
 			}
 			ignoredUserNames.push(userName);
-			this.addChatBotMessageToChatList('/ignoreAdded '+userName);
+			this.addChatBotMessageToChatList('/ignoreAdded ' + userName);
 			this.setIgnoredUserNames(ignoredUserNames);
 		} else {
-			if(ignoredUserNames.length === 0) {
+			if (ignoredUserNames.length === 0) {
 				this.addChatBotMessageToChatList('/ignoreListEmpty -');
 			} else {
-				this.addChatBotMessageToChatList('/ignoreList '+ignoredUserNames.join(' '));
+				this.addChatBotMessageToChatList('/ignoreList ' + ignoredUserNames.join(' '));
 			}
 		}
 		this.updateChatlistView();
 		return null;
 	},
 
-	getIgnoredUserNames: function() {
+	getIgnoredUserNames: function () {
 		var ignoredUserNamesString;
-		if(!this.ignoredUserNames) {
+		if (!this.ignoredUserNames) {
 			ignoredUserNamesString = this.getSetting('ignoredUserNames');
-			if(ignoredUserNamesString) {
+			if (ignoredUserNamesString) {
 				this.ignoredUserNames = ignoredUserNamesString.split(' ');
 			} else {
 				this.ignoredUserNames = [];
@@ -1764,99 +1824,109 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		}
 		return this.ignoredUserNames;
 	},
-	
-	setIgnoredUserNames: function(ignoredUserNames) {
+
+	setIgnoredUserNames: function (ignoredUserNames) {
 		this.ignoredUserNames = ignoredUserNames;
 		this.setSetting('ignoredUserNames', ignoredUserNames.join(' '));
 	},
-	
-	ignoreMessage: function(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
+
+	ignoreMessage: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
 		var textParts;
-		if(userID === this.chatBotID && messageText.charAt(0) === '/') {
+		if (userID === this.chatBotID && messageText.charAt(0) === '/') {
 			textParts = messageText.split(' ');
-			if(textParts.length > 1) {
-				switch(textParts[0]) {
+			if (textParts.length > 1) {
+				switch (textParts[0]) {
 					case '/invite':
 					case '/uninvite':
 					case '/roll':
 						userName = textParts[1];
 						break;
-				}	
+				}
 			}
 		}
-		if(this.inArray(this.getIgnoredUserNames(), userName)) {
+		if (this.inArray(this.getIgnoredUserNames(), userName)) {
 			return true;
 		}
 		return false;
 	},
 
-	deleteMessage: function(messageID) {
+	deleteMessage: function (messageID) {
 		var messageNode = this.getMessageNode(messageID), originalClass, nextSibling;
-		if(messageNode) {
-			originalClass = this.getClass(messageNode);
-			this.setClass(messageNode, originalClass+' deleteSelected');
-			if(confirm(this.lang['deleteMessageConfirm'])) {
+		if (messageNode) {
+			originalClass = messageNode.className;
+			this.addClass(messageNode, 'deleteSelected');
+			if (confirm(this.lang['deleteMessageConfirm'])) {
 				nextSibling = messageNode.nextSibling;
 				try {
 					this.dom['chatList'].removeChild(messageNode);
-					if(nextSibling) {
+					if (nextSibling) {
 						this.updateChatListRowClasses(nextSibling);
 					}
-					this.updateChat('&delete='+messageID);
-				} catch(e) {
-					this.setClass(messageNode, originalClass);
+					this.updateChat('&delete=' + messageID);
+				} catch (e) {
+					messageNode.className = originalClass;
 				}
 			} else {
-				this.setClass(messageNode, originalClass);
+				messageNode.className = originalClass;
 			}
 		}
 	},
 
-	updateChatListRowClasses: function(node) {
+	updateChatListRowClasses: function (node) {
 		var previousNode, rowEven;
-		if(!node) {
+		if (!node) {
 			node = this.dom['chatList'].firstChild;
 		}
-		if(node) {
+		if (node) {
 			previousNode = node.previousSibling;
-			rowEven = (previousNode && this.getClass(previousNode) === 'rowOdd') ? true : false;
-			while(node) {
-				this.setClass(node, (rowEven ? 'rowEven' : 'rowOdd'));
+			rowEven = (previousNode && previousNode.className === 'rowOdd') ? true : false;
+			while (node) {
+				node.className = (rowEven ? 'rowEven' : 'rowOdd');
 				node = node.nextSibling;
 				rowEven = !rowEven;
 			}
 		}
 	},
-	
-	getClass: function(node) {
-		if(typeof node.className !== 'undefined') {
-			return node.className; // IE
+
+	addEvent: function (elem, type, eventHandle) {
+		if (!elem)
+			return;
+		if (elem.addEventListener) {
+			elem.addEventListener(type, eventHandle, false);
+		} else if (elem.attachEvent) {
+			elem.attachEvent("on" + type, eventHandle);
 		} else {
-			return node.getAttribute('class');
-		}
-	},
-	
-	setClass: function(node, className) {
-		if(typeof node.className !== 'undefined') {
-			node.className = className; // IE
-		} else {
-			node.setAttribute('class', className);
+			elem["on" + type] = eventHandle;
 		}
 	},
 
-	scriptLinkEncode: function(text) {
+	addClass: function (node, theClass) {
+		if (!this.hasClass(node, theClass)) {
+			node.className += ' ' + theClass;
+		}
+	},
+
+	removeClass: function (node, theClass) {
+		node.className = node.className.replace(new RegExp('(?:^|\\s)' + theClass + '(?!\\S)', 'g'), '');
+	},
+
+	hasClass: function (node, theClass) {
+		return node.className.match(new RegExp('\\b' + theClass + '\\b'));
+	},
+
+	scriptLinkEncode: function (text) {
 		return this.encodeText(this.addSlashes(this.decodeSpecialChars(text)));
 	},
-	
-	scriptLinkDecode: function(text) {
+
+	scriptLinkDecode: function (text) {
 		return this.encodeSpecialChars(this.removeSlashes(this.decodeText(text)));
 	},
 
-	getScriptLinkValue: function(value) {
+	getScriptLinkValue: function (value) {
 		// This method returns plainText encoded values from javascript links
 		// The value has to be utf8Decoded for MSIE and Opera:
-		if(typeof arguments.callee.utf8Decode === 'undefined') {
-			switch(navigator.appName) {
+		if (typeof arguments.callee.utf8Decode === 'undefined') {
+			switch (navigator.appName) {
 				case 'Microsoft Internet Explorer':
 				case 'Opera':
 					arguments.callee.utf8Decode = true;
@@ -1864,24 +1934,24 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				default:
 					arguments.callee.utf8Decode = false;
 					return value;
-			}	
-		} else if(arguments.callee.utf8Decode) {
-			return this.utf8Decode(value);	
+			}
+		} else if (arguments.callee.utf8Decode) {
+			return this.utf8Decode(value);
 		} else {
 			return value;
 		}
 	},
 
-	sendMessageWrapper: function(text) {
+	sendMessageWrapper: function (text) {
 		this.sendMessage(this.getScriptLinkValue(text));
 	},
 
-	insertMessageWrapper: function(text) {
+	insertMessageWrapper: function (text) {
 		this.insertText(this.getScriptLinkValue(text), true);
 	},
-	
-	switchChannel: function(channel) {
-		if(!this.chatStarted) {
+
+	switchChannel: function (channel) {
+		if (!this.chatStarted) {
 			this.clearChatList();
 			this.channelSwitch = true;
 			this.loginChannelID = null;
@@ -1889,75 +1959,75 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 			this.requestTeaserContent();
 			return;
 		}
-		clearTimeout(this.timer);	
-		var message = 	'lastID='
-						+ this.lastID
-						+ '&channelName='
-						+ this.encodeText(channel);		
-		this.makeRequest(this.ajaxURL,'POST',message);
-		if(this.dom['inputField'] && this.settings['autoFocus']) {
+		clearTimeout(this.timer);
+		var message = 'lastID='
+				+ this.lastID
+				+ '&channelName='
+				+ this.encodeText(channel);
+		this.makeRequest(this.ajaxURL, 'POST', message);
+		if (this.dom['inputField'] && this.settings['autoFocus']) {
 			this.dom['inputField'].focus();
 		}
 	},
 
-	logout: function() {
+	logout: function () {
 		clearTimeout(this.timer);
 		var message = 'logout=true';
-		this.makeRequest(this.ajaxURL,'POST',message);
+		this.makeRequest(this.ajaxURL, 'POST', message);
 	},
-	
-	handleLogout: function(url) {
+
+	handleLogout: function (url) {
 		window.location.href = url;
 	},
 
-	toggleSetting: function(setting, buttonID) {
+	toggleSetting: function (setting, buttonID) {
 		this.setSetting(setting, !this.getSetting(setting));
-		if(buttonID) {
+		if (buttonID) {
 			this.updateButton(setting, buttonID);
 		}
 	},
 
-	updateButton: function(setting, buttonID) {
+	updateButton: function (setting, buttonID) {
 		var node = document.getElementById(buttonID);
-		if(node) {
-			this.setClass(node, (this.getSetting(setting) ? 'button' : 'button off'));
-		}
-	},
-	
-	showHide: function(id, styleDisplay, displayInline) {
-		var node = document.getElementById(id);
-		if(node) {
-			if(styleDisplay) {
-				node.style.display = styleDisplay;
-			} else {
-				if(node.style.display === 'none') {
-					node.style.display = (displayInline ? 'inline' : 'block'); 
-				} else {
-					node.style.display = 'none';
-				}
-			}	
+		if (node) {
+			node.className = (this.getSetting(setting) ? 'button' : 'button off');
 		}
 	},
 
-	setPersistFontColor: function(bool) {
-		this.settings['persistFontColor'] = bool;		
-		if(!this.settings['persistFontColor']) {
+	showHide: function (id, styleDisplay, displayInline) {
+		var node = document.getElementById(id);
+		if (node) {
+			if (styleDisplay) {
+				node.style.display = styleDisplay;
+			} else {
+				if (node.style.display === 'none') {
+					node.style.display = (displayInline ? 'inline' : 'block');
+				} else {
+					node.style.display = 'none';
+				}
+			}
+		}
+	},
+
+	setPersistFontColor: function (bool) {
+		this.settings['persistFontColor'] = bool;
+		if (!this.settings['persistFontColor']) {
 			this.settings['fontColor'] = null;
-			if(this.dom['inputField']) {
+			if (this.dom['inputField']) {
 				this.dom['inputField'].style.color = '';
 			}
 		}
 	},
 
-	setFontColor: function(color) {
-		if(this.settings['persistFontColor']) {
+	setFontColor: function (color) {
+		if (this.settings['persistFontColor']) {
 			this.settings['fontColor'] = color;
-			if(this.dom['inputField']) {
+			if (this.dom['inputField']) {
 				this.dom['inputField'].style.color = color;
 			}
-			if(this.dom['colorCodesContainer']) {
+			if (this.dom['colorCodesContainer']) {
 				this.dom['colorCodesContainer'].style.display = 'none';
-				if(this.dom['inputField']) {
+				if (this.dom['inputField']) {
 					this.dom['inputField'].focus();
 				}
 			}
@@ -1965,32 +2035,32 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 			this.insert('[color=' + color + ']', '[/color]');
 		}
 	},
-	
-	insertText: function(text, clearInputField) {
-		if(clearInputField) {
+
+	insertText: function (text, clearInputField) {
+		if (clearInputField) {
 			this.dom['inputField'].value = '';
 		}
 		this.insert(text, '');
 	},
-	
-	insertBBCode: function(bbCode) {
-		switch(bbCode) {			
+
+	insertBBCode: function (bbCode) {
+		switch (bbCode) {
 			case 'url':
 				var url = prompt(this.lang['urlDialog'], 'http://');
-				if(url)
+				if (url)
 					this.insert('[url=' + url + ']', '[/url]');
 				else
 					this.dom['inputField'].focus();
 				break;
 			default:
-				this.insert('[' + bbCode + ']', '[/' + bbCode + ']');		
+				this.insert('[' + bbCode + ']', '[/' + bbCode + ']');
 		}
 	},
 
-	insert: function(startTag, endTag) {
+	insert: function (startTag, endTag) {
 		this.dom['inputField'].focus();
 		// Internet Explorer:
-		if(typeof document.selection !== 'undefined') {
+		if (typeof document.selection !== 'undefined') {
 			// Insert the tags:
 			var range = document.selection.createRange();
 			var insText = range.text;
@@ -2000,21 +2070,21 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 			if (insText.length === 0) {
 				range.move('character', -endTag.length);
 			} else {
-				range.moveStart('character', startTag.length + insText.length + endTag.length);			
+				range.moveStart('character', startTag.length + insText.length + endTag.length);
 			}
 			range.select();
 		}
 		// Firefox, etc. (Gecko based browsers):
-		else if(typeof this.dom['inputField'].selectionStart !== 'undefined') {
+		else if (typeof this.dom['inputField'].selectionStart !== 'undefined') {
 			// Insert the tags:
 			var start = this.dom['inputField'].selectionStart;
 			var end = this.dom['inputField'].selectionEnd;
 			var insText = this.dom['inputField'].value.substring(start, end);
-			this.dom['inputField'].value = 	this.dom['inputField'].value.substr(0, start)
-											+ startTag
-											+ insText
-											+ endTag
-											+ this.dom['inputField'].value.substr(end);
+			this.dom['inputField'].value = this.dom['inputField'].value.substr(0, start)
+					+ startTag
+					+ insText
+					+ endTag
+					+ this.dom['inputField'].value.substr(end);
 			// Adjust the cursor position:
 			var pos;
 			if (insText.length === 0) {
@@ -2028,38 +2098,38 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		// Other browsers:
 		else {
 			var pos = this.dom['inputField'].value.length;
-			this.dom['inputField'].value = 	this.dom['inputField'].value.substr(0, pos)
-											+ startTag
-											+ endTag
-											+ this.dom['inputField'].value.substr(pos);
+			this.dom['inputField'].value = this.dom['inputField'].value.substr(0, pos)
+					+ startTag
+					+ endTag
+					+ this.dom['inputField'].value.substr(pos);
 		}
 	},
-	
-	replaceText: function(text) {
-		try{
+
+	replaceText: function (text) {
+		try {
 			text = this.replaceLineBreaks(text);
-			if(text.charAt(0) === '/') {
+			if (text.charAt(0) === '/') {
 				text = this.replaceCommands(text);
 			} else {
 				text = this.replaceBBCode(text);
 				text = this.replaceHyperLinks(text);
 				text = this.replaceEmoticons(text);
 			}
-			text = this.breakLongWords(text);		
+			text = this.breakLongWords(text);
 			text = this.replaceCustomText(text);
-		} catch(e){
-			//alert(e);
+		} catch (e) {
+			this.debugMessage('replaceText', e);
 		}
 		return text;
 	},
-	
-	replaceCommands: function(text) {
+
+	replaceCommands: function (text) {
 		try {
-			if(text.charAt(0) !== '/') {
+			if (text.charAt(0) !== '/') {
 				return text;
 			}
-			var textParts = text.split(' ');				
-			switch(textParts[0]) {
+			var textParts = text.split(' ');
+			switch (textParts[0]) {
 				case '/login':
 					return this.replaceCommandLogin(textParts);
 				case '/logout':
@@ -2128,40 +2198,40 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				default:
 					return this.replaceCustomCommands(text, textParts);
 			}
-		} catch(e) {
-			//alert(e);
+		} catch (e) {
+			this.debugMessage('replaceCommands', e);
 		}
 		return text;
 	},
 
-	replaceCommandLogin: function(textParts) {
+	replaceCommandLogin: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['login'].replace(/%s/, textParts[1])
-				+ '</span>';		
+				+ '</span>';
 	},
 
-	replaceCommandLogout: function(textParts) {
+	replaceCommandLogout: function (textParts) {
 		var type = '';
-		if(textParts.length === 3)
+		if (textParts.length === 3)
 			type = textParts[2];
 		return	'<span class="chatBotMessage">'
 				+ this.lang['logout' + type].replace(/%s/, textParts[1])
-				+ '</span>';		
+				+ '</span>';
 	},
-	
-	replaceCommandChannelEnter: function(textParts) {
+
+	replaceCommandChannelEnter: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['channelEnter'].replace(/%s/, textParts[1])
-				+ '</span>';		
+				+ '</span>';
 	},
-	
-	replaceCommandChannelLeave: function(textParts) {
+
+	replaceCommandChannelLeave: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['channelLeave'].replace(/%s/, textParts[1])
-				+ '</span>';		
+				+ '</span>';
 	},
-	
-	replaceCommandPrivMsg: function(textParts) {
+
+	replaceCommandPrivMsg: function (textParts) {
 		var privMsgText = textParts.slice(1).join(' ');
 		privMsgText = this.replaceBBCode(privMsgText);
 		privMsgText = this.replaceHyperLinks(privMsgText);
@@ -2171,8 +2241,8 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				+ '</span> '
 				+ privMsgText;
 	},
-	
-	replaceCommandPrivMsgTo: function(textParts) {
+
+	replaceCommandPrivMsgTo: function (textParts) {
 		var privMsgText = textParts.slice(2).join(' ');
 		privMsgText = this.replaceBBCode(privMsgText);
 		privMsgText = this.replaceHyperLinks(privMsgText);
@@ -2182,8 +2252,8 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				+ '</span> '
 				+ privMsgText;
 	},
-	
-	replaceCommandPrivAction: function(textParts) {
+
+	replaceCommandPrivAction: function (textParts) {
 		var privActionText = textParts.slice(1).join(' ');
 		privActionText = this.replaceBBCode(privActionText);
 		privActionText = this.replaceHyperLinks(privActionText);
@@ -2194,8 +2264,8 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				+ this.lang['privmsg']
 				+ '</span> ';
 	},
-	
-	replaceCommandPrivActionTo: function(textParts) {
+
+	replaceCommandPrivActionTo: function (textParts) {
 		var privActionText = textParts.slice(2).join(' ');
 		privActionText = this.replaceBBCode(privActionText);
 		privActionText = this.replaceHyperLinks(privActionText);
@@ -2204,244 +2274,246 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				+ privActionText
 				+ '</span> <span class="privmsg">'
 				+ this.lang['privmsgto'].replace(/%s/, textParts[1])
-				+ '</span> ';		
+				+ '</span> ';
 	},
-	
-	replaceCommandAction: function(textParts) {
+
+	replaceCommandAction: function (textParts) {
 		var actionText = textParts.slice(1).join(' ');
 		actionText = this.replaceBBCode(actionText);
 		actionText = this.replaceHyperLinks(actionText);
 		actionText = this.replaceEmoticons(actionText);
 		return	'<span class="action">'
 				+ actionText
-				+ '</span>';		
+				+ '</span>';
 	},
-	
-	replaceCommandInvite: function(textParts) {
+
+	replaceCommandInvite: function (textParts) {
 		var inviteText = this.lang['invite']
-							.replace(/%s/, textParts[1])
-							.replace(
-								/%s/,
-								'<a href="javascript:ajaxChat.sendMessageWrapper(\'/join '
-								+ this.scriptLinkEncode(textParts[2])
-								+ '\');" title="'
-								+ this.lang['joinChannel'].replace(/%s/, textParts[2])
-								+ '">'
-								+ textParts[2]
-								+ '</a>'
-							);
+				.replace(/%s/, textParts[1])
+				.replace(
+						/%s/,
+						'<a href="javascript:ajaxChat.sendMessageWrapper(\'/join '
+						+ this.scriptLinkEncode(textParts[2])
+						+ '\');" title="'
+						+ this.lang['joinChannel'].replace(/%s/, textParts[2])
+						+ '">'
+						+ textParts[2]
+						+ '</a>'
+						);
 		return	'<span class="chatBotMessage">'
 				+ inviteText
-				+ '</span>';		
+				+ '</span>';
 	},
-	
-	replaceCommandInviteTo: function(textParts) {
+
+	replaceCommandInviteTo: function (textParts) {
 		var inviteText = this.lang['inviteto']
-							.replace(/%s/, textParts[1])
-							.replace(/%s/, textParts[2]);
+				.replace(/%s/, textParts[1])
+				.replace(/%s/, textParts[2]);
 		return	'<span class="chatBotMessage">'
 				+ inviteText
-				+ '</span>';		
+				+ '</span>';
 	},
-	
-	replaceCommandUninvite: function(textParts) {
+
+	replaceCommandUninvite: function (textParts) {
 		var uninviteText = this.lang['uninvite']
-							.replace(/%s/, textParts[1])
-							.replace(/%s/, textParts[2]);
+				.replace(/%s/, textParts[1])
+				.replace(/%s/, textParts[2]);
 		return	'<span class="chatBotMessage">'
 				+ uninviteText
-				+ '</span>';		
+				+ '</span>';
 	},
-	
-	replaceCommandUninviteTo: function(textParts) {
+
+	replaceCommandUninviteTo: function (textParts) {
 		var uninviteText = this.lang['uninviteto']
-							.replace(/%s/, textParts[1])
-							.replace(/%s/, textParts[2]);
+				.replace(/%s/, textParts[1])
+				.replace(/%s/, textParts[2]);
 		return	'<span class="chatBotMessage">'
 				+ uninviteText
-				+ '</span>';		
+				+ '</span>';
 	},
-	
-	replaceCommandQueryOpen: function(textParts) {
+
+	replaceCommandQueryOpen: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['queryOpen'].replace(/%s/, textParts[1])
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandQueryClose: function(textParts) {
+
+	replaceCommandQueryClose: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['queryClose'].replace(/%s/, textParts[1])
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandIgnoreAdded: function(textParts) {
+
+	replaceCommandIgnoreAdded: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['ignoreAdded'].replace(/%s/, textParts[1])
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandIgnoreRemoved: function(textParts) {
+
+	replaceCommandIgnoreRemoved: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['ignoreRemoved'].replace(/%s/, textParts[1])
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandIgnoreList: function(textParts) {
+
+	replaceCommandIgnoreList: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['ignoreList'] + ' '
 				+ this.getInlineUserMenu(textParts.slice(1))
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandIgnoreListEmpty: function(textParts) {
+
+	replaceCommandIgnoreListEmpty: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['ignoreListEmpty']
-				+ '</span>';			
+				+ '</span>';
 	},
-		
-	replaceCommandKick: function(textParts) {
+
+	replaceCommandKick: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['logoutKicked'].replace(/%s/, textParts[1])
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandWho: function(textParts) {
+
+	replaceCommandWho: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['who'] + ' '
 				+ this.getInlineUserMenu(textParts.slice(1))
-				+ '</span>';		
+				+ '</span>';
 	},
 
-	replaceCommandWhoChannel: function(textParts) {
+	replaceCommandWhoChannel: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['whoChannel'].replace(/%s/, textParts[1]) + ' '
 				+ this.getInlineUserMenu(textParts.slice(2))
-				+ '</span>';		
+				+ '</span>';
 	},
-	
-	replaceCommandWhoEmpty: function(textParts) {
+
+	replaceCommandWhoEmpty: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['whoEmpty']
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandList: function(textParts) {
+
+	replaceCommandList: function (textParts) {
 		var channels = textParts.slice(1);
 		var listChannels = [];
 		var channelName;
-		for(var i=0; i<channels.length; i++) {
-			channelName = (channels[i] === this.channelName) ? '<b>'+channels[i]+'</b>' : channels[i];
+		for (var i = 0; i < channels.length; i++) {
+			channelName = (channels[i] === this.channelName) ? '<b>' + channels[i] + '</b>' : channels[i];
 			listChannels.push(
-				'<a href="javascript:ajaxChat.sendMessageWrapper(\'/join '
-				+ this.scriptLinkEncode(channels[i])
-				+ '\');" title="'
-				+ this.lang['joinChannel'].replace(/%s/, channels[i])
-				+ '">'
-				+ channelName
-				+ '</a>'
-			);
+					'<a href="javascript:ajaxChat.sendMessageWrapper(\'/join '
+					+ this.scriptLinkEncode(channels[i])
+					+ '\');" title="'
+					+ this.lang['joinChannel'].replace(/%s/, channels[i])
+					+ '">'
+					+ channelName
+					+ '</a>'
+					);
 		}
 		return	'<span class="chatBotMessage">'
 				+ this.lang['list'] + ' '
 				+ listChannels.join(', ')
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandBans: function(textParts) {
+
+	replaceCommandBans: function (textParts) {
 		var users = textParts.slice(1);
 		var listUsers = [];
-		for(var i=0; i<users.length; i++) {
+		for (var i = 0; i < users.length; i++) {
 			listUsers.push(
-				'<a href="javascript:ajaxChat.sendMessageWrapper(\'/unban '
-				+ this.scriptLinkEncode(users[i])
-				+ '\');" title="'
-				+ this.lang['unbanUser'].replace(/%s/, users[i])
-				+ '">'
-				+ users[i]
-				+ '</a>'
-			);
+					'<a href="javascript:ajaxChat.sendMessageWrapper(\'/unban '
+					+ this.scriptLinkEncode(users[i])
+					+ '\');" title="'
+					+ this.lang['unbanUser'].replace(/%s/, users[i])
+					+ '">'
+					+ users[i]
+					+ '</a>'
+					);
 		}
 		return	'<span class="chatBotMessage">'
 				+ this.lang['bans'] + ' '
 				+ listUsers.join(', ')
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandBansEmpty: function(textParts) {
+
+	replaceCommandBansEmpty: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['bansEmpty']
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandUnban: function(textParts) {
+
+	replaceCommandUnban: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['unban'].replace(/%s/, textParts[1])
-				+ '</span>';		
+				+ '</span>';
 	},
-	
-	replaceCommandWhois: function(textParts) {
+
+	replaceCommandWhois: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['whois'].replace(/%s/, textParts[1]) + ' '
 				+ textParts[2]
-				+ '</span>';		
+				+ '</span>';
 	},
 
-	replaceCommandWhereis: function(textParts) {
+	replaceCommandWhereis: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['whereis'].replace(/%s/, textParts[1]).replace(
-								/%s/,
-								'<a href="javascript:ajaxChat.sendMessageWrapper(\'/join '
-								+ this.scriptLinkEncode(textParts[2])
-								+ '\');" title="'
-								+ this.lang['joinChannel'].replace(/%s/, textParts[2])
-								+ '">'
-								+ textParts[2]
-								+ '</a>'
-							)
-				+ '</span>';		
+				/%s/,
+				'<a href="javascript:ajaxChat.sendMessageWrapper(\'/join '
+				+ this.scriptLinkEncode(textParts[2])
+				+ '\');" title="'
+				+ this.lang['joinChannel'].replace(/%s/, textParts[2])
+				+ '">'
+				+ textParts[2]
+				+ '</a>'
+				)
+				+ '</span>';
 	},
-	
-	replaceCommandRoll: function(textParts) {
+
+	replaceCommandRoll: function (textParts) {
 		var rollText = this.lang['roll'].replace(/%s/, textParts[1]);
 		rollText = rollText.replace(/%s/, textParts[2]);
 		rollText = rollText.replace(/%s/, textParts[3]);
 		return	'<span class="chatBotMessage">'
 				+ rollText
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandNick: function(textParts) {
+
+	replaceCommandNick: function (textParts) {
 		return	'<span class="chatBotMessage">'
 				+ this.lang['nick'].replace(/%s/, textParts[1]).replace(/%s/, textParts[2])
-				+ '</span>';		
+				+ '</span>';
 	},
-		
-	replaceCommandError: function(textParts) {
-		var errorMessage = this.lang['error'+textParts[1]];
-		if(!errorMessage) {
+
+	replaceCommandError: function (textParts) {
+		var errorMessage = this.lang['error' + textParts[1]];
+		if (!errorMessage) {
 			errorMessage = 'Error: Unknown.';
-		} else if(textParts.length > 2) {
+		} else if (textParts.length > 2) {
 			errorMessage = errorMessage.replace(/%s/, textParts.slice(2).join(' '));
 		}
 		return	'<span class="chatBotErrorMessage">'
 				+ errorMessage
-				+ '</span>';		
+				+ '</span>';
 	},
 
-	getInlineUserMenu: function(users) {
+	getInlineUserMenu: function (users) {
 		var menu = '';
-		for(var i=0; i<users.length; i++) {
-			if(i>0) {
+		for (var i = 0; i < users.length; i++) {
+			if (i > 0) {
 				menu += ', ';
 			}
-			menu	+= '<a href="javascript:ajaxChat.toggleUserMenu(\''
+			menu += '<a href="javascript:ajaxChat.toggleUserMenu(\''
 					+ this.getInlineUserMenuDocumentID(this.userMenuCounter, i)
 					+ '\', \''
 					+ this.scriptLinkEncode(users[i])
 					+ '\', null);" title="'
 					+ this.lang['toggleUserMenu'].replace(/%s/, users[i])
-					+ '" >'
-					+ ((users[i] === this.userName) ? '<b>'+users[i]+'</b>' : users[i])
+					+ '" dir="'
+					+ this.baseDirection
+					+ '">'
+					+ ((users[i] === this.userName) ? '<b>' + users[i] + '</b>' : users[i])
 					+ '</a>'
 					+ '<ul class="inlineUserMenu" id="'
 					+ this.getInlineUserMenuDocumentID(this.userMenuCounter, i)
@@ -2452,98 +2524,98 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		return menu;
 	},
 
-	containsUnclosedTags: function(str) {
+	containsUnclosedTags: function (str) {
 		var openTags, closeTags,
-			regExpOpenTags = /<[^>\/]+?>/gm,
-			regExpCloseTags = /<\/[^>]+?>/gm;
-	
-		openTags	= str.match(regExpOpenTags);
-		closeTags	= str.match(regExpCloseTags);
+				regExpOpenTags = /<[^>\/]+?>/gm,
+				regExpCloseTags = /<\/[^>]+?>/gm;
+
+		openTags = str.match(regExpOpenTags);
+		closeTags = str.match(regExpCloseTags);
 		// Return true if the number of tags doesn't match:
-		if((!openTags && closeTags) ||
-			(openTags && !closeTags) ||
-			(openTags && closeTags && (openTags.length !== closeTags.length))) {
+		if ((!openTags && closeTags) ||
+				(openTags && !closeTags) ||
+				(openTags && closeTags && (openTags.length !== closeTags.length))) {
 			return true;
 		}
 		return false;
 	},
-		
-	breakLongWords: function(text) {
+
+	breakLongWords: function (text) {
 		var newText, charCounter, currentChar, withinTag, withinEntity, i;
-	
-		if(!this.settings['wordWrap'])
+
+		if (!this.settings['wordWrap'])
 			return text;
-		
+
 		newText = '';
 		charCounter = 0;
-		
-		for(i=0; i<text.length; i++) {
+
+		for (i = 0; i < text.length; i++) {
 			currentChar = text.charAt(i);
-			
+
 			// Check if we are within a tag or entity:
-			if(currentChar === '<') {
+			if (currentChar === '<') {
 				withinTag = true;
 				// Reset the charCounter after newline tags (<br/>):
-				if(i>5 && text.substr(i-5,4) === '<br/')
-					charCounter = 0;				
-			} else if(withinTag && i>0 && text.charAt(i-1) === '>') {
+				if (i > 5 && text.substr(i - 5, 4) === '<br/')
+					charCounter = 0;
+			} else if (withinTag && i > 0 && text.charAt(i - 1) === '>') {
 				withinTag = false;
 				// Reset the charCounter after newline tags (<br/>):
-				if(i>4 && text.substr(i-5,4) === '<br/')
+				if (i > 4 && text.substr(i - 5, 4) === '<br/')
 					charCounter = 0;
 			}
-			
-			if(!withinTag && currentChar === '&') {
+
+			if (!withinTag && currentChar === '&') {
 				withinEntity = true;
-			} else if(withinEntity && i>0 && text.charAt(i-1) === ';') {
+			} else if (withinEntity && i > 0 && text.charAt(i - 1) === ';') {
 				withinEntity = false;
 				// We only increase the charCounter once for the whole entiy:
 				charCounter++;
 			}
-				
-			if(!withinTag && !withinEntity) {
+
+			if (!withinTag && !withinEntity) {
 				// Reset the charCounter if we encounter a word boundary:
-				if(currentChar === ' ' || currentChar === '\n' || currentChar === '\t') {
+				if (currentChar === ' ' || currentChar === '\n' || currentChar === '\t') {
 					charCounter = 0;
 				} else {
 					// We are not within a tag or entity, increase the charCounter:
 					charCounter++;
 				}
-				if(charCounter > this.settings['maxWordLength']) {
+				if (charCounter > this.settings['maxWordLength']) {
 					// maxWordLength has been reached, break here and reset the charCounter:
 					newText += '&#8203;';
 					charCounter = 0;
 				}
-			}		
+			}
 			// Add the current char to the text:
 			newText += currentChar;
 		}
-		
+
 		return newText;
 	},
-	
-	replaceBBCode: function(text) {
-		if(!this.settings['bbCode']) {
+
+	replaceBBCode: function (text) {
+		if (!this.settings['bbCode']) {
 			// If BBCode is disabled, just strip the text from BBCode tags:
 			return text.replace(/\[(?:\/)?(\w+)(?:=([^<>]*?))?\]/, '');
 		}
 		// Remove the BBCode tags:
 		return text.replace(
-			/\[(\w+)(?:=([^<>]*?))?\](.+?)\[\/\1\]/gm, 
-			this.replaceBBCodeCallback
-		);
+				/\[(\w+)(?:=([^<>]*?))?\](.+?)\[\/\1\]/gm,
+				this.replaceBBCodeCallback
+				);
 	},
-	
-	replaceBBCodeCallback: function(str, p1, p2, p3) {
+
+	replaceBBCodeCallback: function (str, p1, p2, p3) {
 		// Only replace predefined BBCode tags:
-		if(!ajaxChat.inArray(ajaxChat.bbCodeTags, p1)) {
+		if (!ajaxChat.inArray(ajaxChat.bbCodeTags, p1)) {
 			return str;
 		}
 		// Avoid invalid XHTML (unclosed tags):
-		if(ajaxChat.containsUnclosedTags(p3)) {
+		if (ajaxChat.containsUnclosedTags(p3)) {
 			return str;
-		}	
-		switch(p1) {
+		}
+		switch (p1) {
 			case 'color':
 				return ajaxChat.replaceBBCodeColor(p3, p2);
 			case 'url':
@@ -2561,11 +2633,11 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		}
 	},
 
-	replaceBBCodeColor: function(content, attribute) {
-		if(this.settings['bbCodeColors']) {
+	replaceBBCodeColor: function (content, attribute) {
+		if (this.settings['bbCodeColors']) {
 			// Only allow predefined color codes:
-			if(!attribute || !this.inArray(ajaxChat.colorCodes, attribute))
-				return content;								
+			if (!attribute || !this.inArray(ajaxChat.colorCodes, attribute))
+				return content;
 			return 	'<span style="color:'
 					+ attribute + ';">'
 					+ this.replaceBBCode(content)
@@ -2573,54 +2645,63 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		}
 		return content;
 	},
-	
-	replaceBBCodeUrl: function(content, attribute) {
-		var url, regExpUrl;
-		if(attribute)
+
+	replaceBBCodeUrl: function (content, attribute) {
+		var url, regExpUrl, link;
+		if (attribute)
 			url = attribute.replace(/\s/gm, this.encodeText(' '));
 		else
 			url = this.stripBBCodeTags(content.replace(/\s/gm, this.encodeText(' ')));
 		regExpUrl = new RegExp(
-			'^(?:(?:http)|(?:https)|(?:ftp)|(?:irc)):\\/\\/',
-			''
-		);
-		if(!url || !url.match(regExpUrl))
+				'^(?:(?:http)|(?:https)|(?:ftp)|(?:irc)):\\/\\/',
+				''
+				);
+		if (!url || !url.match(regExpUrl))
 			return content;
-		return 	'<a href="'
+
+		this.inUrlBBCode = true;
+		link = '<a href="'
 				+ url
 				+ '" onclick="window.open(this.href); return false;">'
 				+ this.replaceBBCode(content)
 				+ '</a>';
+		this.inUrlBBCode = false;
+		return link;
 	},
-	
-	replaceBBCodeImage: function(url) {
-		var regExpUrl, maxWidth, maxHeight;
-		if(this.settings['bbCodeImages']) {
+
+	replaceBBCodeImage: function (url) {
+		var regExpUrl, maxWidth, maxHeight, link;
+		if (this.settings['bbCodeImages']) {
 			regExpUrl = new RegExp(
-				this.regExpMediaUrl,
-				''
-			);
-			if(!url || !url.match(regExpUrl))
+					this.regExpMediaUrl,
+					''
+					);
+			if (!url || !url.match(regExpUrl))
 				return url;
-			url = url.replace(/\s/gm, this.encodeText(' '));
-			maxWidth = this.dom['chatList'].offsetWidth-50;
-			maxHeight = this.dom['chatList'].offsetHeight-50;
-			return	'<a href="'
-					+url
-					+'" onclick="window.open(this.href); return false;">'
-					+'<img class="bbCodeImage" style="max-width:'
-					+maxWidth
-					+'px; max-height:'
-					+maxHeight
-					+'px;" src="'
-					+url
-					+'" alt="" onload="ajaxChat.updateChatlistView();"/></a>';
+			url = this.stripTags(url.replace(/\s/gm, this.encodeText(' ')));
+			maxWidth = this.dom['chatList'].offsetWidth - 50;
+			maxHeight = this.dom['chatList'].offsetHeight - 50;
+			link = '<img class="bbCodeImage" style="max-width:'
+					+ maxWidth
+					+ 'px; max-height:'
+					+ maxHeight
+					+ 'px;" src="'
+					+ url
+					+ '" alt="" onload="ajaxChat.updateChatlistView();"/>';
+			if (!this.inUrlBBCode) {
+				link = '<a href="'
+						+ url
+						+ '" onclick="window.open(this.href); return false;">'
+						+ link
+						+ '</a>';
+			}
+			return link;
 		}
 		return url;
 	},
 
-	replaceBBCodeQuote: function(content, attribute) {
-		if(attribute)
+	replaceBBCodeQuote: function (content, attribute) {
+		if (attribute)
 			return	'<span class="quote"><cite>'
 					+ this.lang['cite'].replace(/%s/, attribute)
 					+ '</cite><q>'
@@ -2631,64 +2712,64 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 				+ '</q></span>';
 	},
 
-	replaceBBCodeCode: function(content) {
+	replaceBBCodeCode: function (content) {
 		// Replace vertical tabs and multiple spaces with two non-breaking space characters:
 		return 	'<code>'
 				+ this.replaceBBCode(content.replace(/\t|(?:  )/gm, '&#160;&#160;'))
 				+ '</code>';
 	},
-	
-	replaceBBCodeUnderline: function(content) {
+
+	replaceBBCodeUnderline: function (content) {
 		return 	'<span style="text-decoration:underline;">'
 				+ this.replaceBBCode(content)
 				+ '</span>';
 	},
-	
-	replaceHyperLinks: function(text) {
+
+	replaceHyperLinks: function (text) {
 		var regExp;
-		if(!this.settings['hyperLinks']) {
+		if (!this.settings['hyperLinks']) {
 			return text;
 		}
 		regExp = new RegExp(
-			'(^|\\s|>)((?:(?:http)|(?:https)|(?:ftp)|(?:irc)):\\/\\/[^\\s<>]+)(<\\/a>)?',
-			'gm'
-		);
+				'(^|\\s|>)((?:(?:http)|(?:https)|(?:ftp)|(?:irc)):\\/\\/[^\\s<>]+)(<\\/a>)?',
+				'gm'
+				);
 		return text.replace(
-			regExp,
-			// Specifying an anonymous function as second parameter:
-			function(str, p1, p2, p3) {
-				// Do not replace URL's inside URL's:
-				if(p3) {
-					return str;
-				}
-				return 	p1
-						+ '<a href="'
-						+ p2
-						+ '" onclick="window.open(this.href); return false;">'
-						+ p2
-						+ '</a>';
-			}
-		);
-	},
+				regExp,
+				// Specifying an anonymous function as second parameter:
+						function (str, p1, p2, p3) {
+							// Do not replace URL's inside URL's:
+							if (p3) {
+								return str;
+							}
+							return 	p1
+									+ '<a href="'
+									+ p2
+									+ '" onclick="window.open(this.href); return false;">'
+									+ p2
+									+ '</a>';
+						}
+				);
+			},
 
-	replaceLineBreaks: function(text) {
-		var regExp  = new RegExp('\\n',	'g');
+	replaceLineBreaks: function (text) {
+		var regExp = new RegExp('\\n', 'g');
 
-		if(!this.settings['lineBreaks']) {
+		if (!this.settings['lineBreaks']) {
 			return text.replace(regExp, ' ');
 		} else {
 			return text.replace(regExp, '<br/>');
 		}
 	},
 
-	replaceEmoticons: function(text) {
-		if(!this.settings['emoticons']) {
+	replaceEmoticons: function (text) {
+		if (!this.settings['emoticons']) {
 			return text;
 		}
-		if(!arguments.callee.regExp) {
+		if (!arguments.callee.regExp) {
 			var regExpStr = '^(.*)(';
-			for(var i=0; i<this.emoticonCodes.length; i++) {
-				if(i!==0)
+			for (var i = 0; i < this.emoticonCodes.length; i++) {
+				if (i !== 0)
 					regExpStr += '|';
 				regExpStr += '(?:' + this.escapeRegExp(this.emoticonCodes[i]) + ')';
 			}
@@ -2696,149 +2777,149 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 			arguments.callee.regExp = new RegExp(regExpStr, 'gm');
 		}
 		return text.replace(
-			arguments.callee.regExp,			
-			this.replaceEmoticonsCallback
-		);
+				arguments.callee.regExp,
+				this.replaceEmoticonsCallback
+				);
 	},
-	
-	replaceEmoticonsCallback: function(str, p1, p2, p3) {
+
+	replaceEmoticonsCallback: function (str, p1, p2, p3) {
 		if (!arguments.callee.regExp) {
 			arguments.callee.regExp = new RegExp('(="[^"]*$)|(&[^;]*$)', '');
 		}
 		// Avoid replacing emoticons in tag attributes or XHTML entities:
-		if(p1.match(arguments.callee.regExp)) {
+		if (p1.match(arguments.callee.regExp)) {
 			return str;
-		}	
-		if(p2) {
-			var index = ajaxChat.arraySearch(p2, ajaxChat.emoticonCodes);							
+		}
+		if (p2) {
+			var index = ajaxChat.arraySearch(p2, ajaxChat.emoticonCodes);
 			return 	ajaxChat.replaceEmoticons(p1)
-				+	'<img src="'
-				+	ajaxChat.dirs['emoticons']
-				+	ajaxChat.emoticonFiles[index]
-				+	'" alt="'
-				+	p2
-				+	'" />'
-				+ 	ajaxChat.replaceEmoticons(p3);
+					+ '<img src="'
+					+ ajaxChat.dirs['emoticons']
+					+ ajaxChat.emoticonFiles[index]
+					+ '" alt="'
+					+ p2
+					+ '" />'
+					+ ajaxChat.replaceEmoticons(p3);
 		}
 		return str;
 	},
-	
-	getActiveStyle: function() {
+
+	getActiveStyle: function () {
 		var cookie = this.readCookie(this.sessionName + '_style');
 		var style = cookie ? cookie : this.getPreferredStyleSheet();
-		return style;		
+		return style;
 	},
 
-	initStyle: function() {
+	initStyle: function () {
 		this.styleInitiated = true;
 		this.setActiveStyleSheet(this.getActiveStyle());
 	},
-	
-	persistStyle: function() {
-		if(this.styleInitiated) {
+
+	persistStyle: function () {
+		if (this.styleInitiated) {
 			this.createCookie(this.sessionName + '_style', this.getActiveStyleSheet(), this.cookieExpiration);
 		}
 	},
-	
-	setSelectedStyle: function() {
-		if(this.dom['styleSelection']) {
+
+	setSelectedStyle: function () {
+		if (this.dom['styleSelection']) {
 			var style = this.getActiveStyle();
 			var styleOptions = this.dom['styleSelection'].getElementsByTagName('option');
-			for(var i=0; i<styleOptions.length; i++) {
-				if(styleOptions[i].value == style) {
+			for (var i = 0; i < styleOptions.length; i++) {
+				if (styleOptions[i].value == style) {
 					styleOptions[i].selected = true;
 					break;
 				}
 			}
 		}
 	},
-	
-	getSelectedStyle: function() {
+
+	getSelectedStyle: function () {
 		var styleOptions = this.dom['styleSelection'].getElementsByTagName('option');
-		if(this.dom['styleSelection'].selectedIndex === -1) {
+		if (this.dom['styleSelection'].selectedIndex === -1) {
 			return styleOptions[0].value;
 		} else {
 			return styleOptions[this.dom['styleSelection'].selectedIndex].value;
 		}
 	},
-	
-	setActiveStyleSheet: function(title) {
-		var i, a, main, titleFound = false;
-		for(i=0; (a = document.getElementsByTagName('link')[i]); i++) {
-			if(a.getAttribute('rel').indexOf('style') !== -1 && a.getAttribute('title')) {
+
+	setActiveStyleSheet: function (title) {
+		var i, a, titleFound = false;
+		for (i = 0; (a = document.getElementsByTagName('link')[i]); i++) {
+			if (a.getAttribute('rel').indexOf('style') !== -1 && a.getAttribute('title')) {
 				a.disabled = true;
-				if(a.getAttribute('title') === title) {
-	                a.disabled = false;
-	                titleFound = true;
+				if (a.getAttribute('title') === title) {
+					a.disabled = false;
+					titleFound = true;
 				}
 			}
 		}
-		if(!titleFound && title !== null) {
-		   this.setActiveStyleSheet(this.getPreferredStyleSheet());
+		if (!titleFound && title !== null) {
+			this.setActiveStyleSheet(this.getPreferredStyleSheet());
 		}
 	},
-	
-	getActiveStyleSheet: function() {
+
+	getActiveStyleSheet: function () {
 		var i, a;
-		for(i=0; (a = document.getElementsByTagName('link')[i]); i++) {
-			if(a.getAttribute('rel').indexOf('style') != -1 && a.getAttribute('title') && !a.disabled) {
-				return a.getAttribute('title');
-			}
-		}
-		return null;
-	},
-	
-	getPreferredStyleSheet: function() {
-		var i,a;
-		for(i=0; (a = document.getElementsByTagName('link')[i]); i++) {
-			if(a.getAttribute('rel').indexOf('style') !== -1
-				&& a.getAttribute('rel').indexOf('alt') === -1
-				&& a.getAttribute('title')
-				) {
+		for (i = 0; (a = document.getElementsByTagName('link')[i]); i++) {
+			if (a.getAttribute('rel').indexOf('style') != -1 && a.getAttribute('title') && !a.disabled) {
 				return a.getAttribute('title');
 			}
 		}
 		return null;
 	},
 
-	switchLanguage: function(langCode) {
-		window.location.search = '?lang='+langCode;
-	},
-	
-	createCookie: function(name,value,days) {
-		var expires = '';
-		if(days) {
-			var date = new Date();
-			date.setTime(date.getTime()+(days*24*60*60*1000));
-			expires = '; expires='+date.toGMTString();
+	getPreferredStyleSheet: function () {
+		var i, a;
+		for (i = 0; (a = document.getElementsByTagName('link')[i]); i++) {
+			if (a.getAttribute('rel').indexOf('style') !== -1
+					&& a.getAttribute('rel').indexOf('alt') === -1
+					&& a.getAttribute('title')
+					) {
+				return a.getAttribute('title');
+			}
 		}
-		var path = '; path='+this.cookiePath;
-		var domain = this.cookieDomain ? '; domain='+this.cookieDomain : '';
-		var secure = this.cookieSecure ? '; secure' : '';
-		document.cookie = name+'='+encodeURIComponent(value)+expires+path+domain+secure;
+		return null;
 	},
-	
-	readCookie: function(name) {
-		if(!document.cookie)
-		   return null;
+
+	switchLanguage: function (langCode) {
+		window.location.search = '?lang=' + langCode;
+	},
+
+	createCookie: function (name, value, days) {
+		var expires = '';
+		if (days) {
+			var date = new Date();
+			date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+			expires = '; expires=' + date.toGMTString();
+		}
+		var path = '; path=' + this.cookiePath;
+		var domain = this.cookieDomain ? '; domain=' + this.cookieDomain : '';
+		var secure = this.cookieSecure ? '; secure' : '';
+		document.cookie = name + '=' + encodeURIComponent(value) + expires + path + domain + secure;
+	},
+
+	readCookie: function (name) {
+		if (!document.cookie)
+			return null;
 		var nameEQ = name + '=';
 		var ca = document.cookie.split(';');
-		for(var i=0; i<ca.length; i++) {
+		for (var i = 0; i < ca.length; i++) {
 			var c = ca[i];
-			while(c.charAt(0) === ' ') {
+			while (c.charAt(0) === ' ') {
 				c = c.substring(1, c.length);
 			}
-			if(c.indexOf(nameEQ) === 0) {
+			if (c.indexOf(nameEQ) === 0) {
 				return decodeURIComponent(c.substring(nameEQ.length, c.length));
 			}
 		}
 		return null;
 	},
 
-	isCookieEnabled: function() {
+	isCookieEnabled: function () {
 		this.createCookie(this.sessionName + '_cookie_test', true, 1);
 		var cookie = this.readCookie(this.sessionName + '_cookie_test');
-		if(cookie) {
+		if (cookie) {
 			// Unset the test cookie:
 			this.createCookie(this.sessionName + '_cookie_test', true, -1);
 			// Cookie test successfull, return true:
@@ -2846,41 +2927,41 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 		}
 		return false;
 	},
-	
-	finalize: function() {	
-		if(typeof this.finalizeFunction === 'function') {
+
+	finalize: function () {
+		if (typeof this.finalizeFunction === 'function') {
 			this.finalizeFunction();
 		}
 		// Ensure the socket connection is closed on unload:
-		if(this.socket) {
+		if (this.socket) {
 			try {
 				this.socket.close();
 				this.socket = null;
-			} catch(e) {
-				//alert(e);
+			} catch (e) {
+				this.debugMessage('finalize::closeSocket', e);
 			}
-		}	
+		}
 		this.persistSettings();
-		this.persistStyle();		
+		this.persistStyle();
 		this.customFinalize();
 	},
 
 	// Override to perform custom actions on flash initialization:
-	initializeCustomFlashInterface: function() {	
+	initializeCustomFlashInterface: function () {
 	},
-	
+
 	// Override to handle custom info messages
-	handleCustomInfoMessage: function(infoType, infoData) {
+	handleCustomInfoMessage: function (infoType, infoData) {
 	},
 
 	// Override to add custom initialization code
 	// This method is called on page load
-	customInitialize: function() {		
+	customInitialize: function () {
 	},
 
 	// Override to add custom finalization code
 	// This method is called on page unload
-	customFinalize: function() {	
+	customFinalize: function () {
 	},
 
 	// Override to add custom user menu items:
@@ -2888,35 +2969,35 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 	// encodedUserName contains the userName ready to be used for javascript links
 	// userID is only available for the online users menu - not for the inline user menu
 	// use (encodedUserName == this.encodedUserName) to check for the current user
-	getCustomUserMenuItems: function(encodedUserName, userID) {
+	getCustomUserMenuItems: function (encodedUserName, userID) {
 		return '';
 	},
 
 	// Override to parse custom input messages:
 	// Return replaced text
 	// text contains the whole message
-	parseCustomInputMessage: function(text) {
+	parseCustomInputMessage: function (text) {
 		return text;
 	},
-	
+
 	// Override to parse custom input commands:
 	// Return parsed text
 	// text contains the whole message, textParts the message split up as words array
-	parseCustomInputCommand: function(text, textParts) {
+	parseCustomInputCommand: function (text, textParts) {
 		return text;
 	},
-	
+
 	// Override to replace custom text:
 	// Return replaced text
 	// text contains the whole message
-	replaceCustomText: function(text) {
+	replaceCustomText: function (text) {
 		return text;
 	},
-	
+
 	// Override to replace custom commands:
 	// Return replaced text for custom commands
 	// text contains the whole message, textParts the message split up as words array
-	replaceCustomCommands: function(text, textParts) {
+	replaceCustomCommands: function (text, textParts) {
 		return text;
 	},
 
@@ -2924,14 +3005,30 @@ playSoundOnNewMessage: function(dateObject, userID, userName, userRole, messageI
 	// Return replaced text and call replaceBBCode recursively for the content text
 	// tag contains the BBCode tag, attribute the BBCode attribute and content the content text
 	// This method is only called for BBCode tags which are in the bbCodeTags list
-	replaceCustomBBCode: function(tag, attribute, content) {
+	replaceCustomBBCode: function (tag, attribute, content) {
 		return '<' + tag + '>' + this.replaceBBCode(content) + '</' + tag + '>';
 	},
-	
+
 	// Override to perform custom actions on new messages:
 	// Return true if message is to be added to the chatList, else false
-	customOnNewMessage: function(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
+	customOnNewMessage: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
 		return true;
+	},
+
+	// Override to play custom sounds on new messages:
+	// Return true to use the default sound handler, else false
+	customSoundOnNewMessage: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
+		return true;
+	},
+
+	debugMessage: function (msg, e) {
+		msg = 'Ajax chat: ' + msg + ' exception: ';
+		if (this.debug) {
+			console.log(msg, e);
+			if (this.debug === 2) {
+				alert(msg + e);
+			}
+		}
 	}
 
 };

@@ -14,6 +14,8 @@ include_once('include/ConfigUtils.php');
 chdir ($currentPath);
 
 // Define AJAX Chat user roles:
+define('AJAX_CHAT_BANNED',		6);
+define('AJAX_CHAT_CUSTOM',		5);
 define('AJAX_CHAT_CHATBOT',		4);
 define('AJAX_CHAT_ADMIN',		3);
 define('AJAX_CHAT_MODERATOR',	2);
@@ -34,7 +36,7 @@ $config['dbConnection']['pass'] = $dbconfig['db_password'];
 // Database name:
 $config['dbConnection']['name'] = $dbconfig['db_name'];
 // Database type:
-$config['dbConnection']['type'] = $dbconfig['db_type'];
+$config['dbConnection']['type'] = 'mysqli';
 // Database port:
 $config['dbConnection']['port'] = trim($dbconfig['db_port'],':');
 // Database link:
