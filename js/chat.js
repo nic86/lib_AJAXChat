@@ -1383,7 +1383,7 @@ var ajaxChat = {
 	},
 
 	blinkOnNewMessage: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
-		if (this.settings['blink'] && this.lastID && !this.channelSwitch && userID !== this.userID) {
+		if (this.lastID && userID !== this.userID) {
 			clearInterval(this.blinkInterval);
 			this.blinkInterval = setInterval(
 					'ajaxChat.blinkUpdate(\'' + this.addSlashes(this.decodeSpecialChars(userName)) + '\')',
