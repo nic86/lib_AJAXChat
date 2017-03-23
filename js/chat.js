@@ -1384,6 +1384,9 @@ var ajaxChat = {
 
 	blinkOnNewMessage: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
 		if (this.lastID && userID !== this.userID) {
+			// Modyfied by YetiForce CRM //
+			parent.AJAXChat_Chat_Js.registerUnreadMessage();
+			// Modyfied by YetiForce CRM //
 			clearInterval(this.blinkInterval);
 			this.blinkInterval = setInterval(
 					'ajaxChat.blinkUpdate(\'' + this.addSlashes(this.decodeSpecialChars(userName)) + '\')',
