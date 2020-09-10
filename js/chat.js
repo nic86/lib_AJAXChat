@@ -435,6 +435,7 @@ var ajaxChat = {
 	},
 
 	loadFlashInterface: function () {
+		/*
 		if (this.dom['flashInterfaceContainer']) {
 			this.updateDOM(
 					'flashInterfaceContainer',
@@ -454,10 +455,11 @@ var ajaxChat = {
 					);
 			FABridge.addInitializationCallback('ajaxChat', this.flashInterfaceLoadCompleteHandler);
 		}
+		*/
 	},
 
 	flashInterfaceLoadCompleteHandler: function () {
-		ajaxChat.initializeFlashInterface();
+		//ajaxChat.initializeFlashInterface();
 	},
 
 	initializeFlashInterface: function () {
@@ -466,7 +468,7 @@ var ajaxChat = {
 			this.socketConnect();
 		}
 		this.loadSounds();
-		this.initializeCustomFlashInterface();
+		//this.initializeCustomFlashInterface();
 	},
 
 	socketConnect: function () {
@@ -656,6 +658,8 @@ var ajaxChat = {
 	},
 
 	playSound: function (soundID) {
+		var audio = new Audio('sounds/'+soundID+'.mp3');
+		audio.play();
 		if (this.sounds && this.sounds[soundID]) {
 			try {
 				// play() parameters are
@@ -672,7 +676,7 @@ var ajaxChat = {
 
 	playSoundOnNewMessage: function (dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) {
 		var messageParts;
-		if (this.settings['audio'] && this.sounds && this.lastID && !this.channelSwitch) {
+		if (this.settings['audio'] && this.lastID && !this.channelSwitch) {
 			if (this.customSoundOnNewMessage(dateObject, userID, userName, userRole, messageID, messageText, channelID, ip) === false) {
 				return;
 			}
